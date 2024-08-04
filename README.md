@@ -1,6 +1,6 @@
 <div align="center">
 
-# [ RedRose 🌹 ]
+# [ Rose 🌹 ]
 
 [![Twitter](https://img.shields.io/twitter/follow/ROSE?style=social)](https://twitter.com/redrose)
 [![Website](https://img.shields.io/website?url=https%3A%2F%2Fredrose.com%2F)](https://redrose.com/)
@@ -10,7 +10,7 @@
 
 ---
 
-## Money that goes up
+## Rose Experimental Money
 
 ![rose](docs/rose.svg)
 
