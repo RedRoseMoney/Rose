@@ -144,3 +144,23 @@ function rwalk_SBC(R₀::T, R₁::T, α::T, n::Int) where T
     end
     return prices, acc_vol, r
 end
+
+function constant_vol_SBC(R₀::T, R₁::T, α::T, x::T, n::Int) where T
+    prices = zeros(T, n)
+    acc_vol = zeros(T, n)
+    reserves_value = zeros(T, n)
+    r = Reserves(R₀, R₁, R₁/10., R₁, α)
+    for i = 1:n
+        price = r(x)
+        price = r(-x)
+        prices[i] = price
+        if i == 1
+            acc_vol[i] = 2x
+            continue
+        end
+        acc_vol[i] = acc_vol[i-1] + abs(2x)
+        reserves_value[i] = r.R₀ + (price * r.R₁)
+    end
+    return prices, acc_vol, reserves_value, r
+end
+

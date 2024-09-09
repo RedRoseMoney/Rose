@@ -60,27 +60,39 @@ An Asymmetric AMM ($aAMM$) is a Bonding Curve with two distinct formulas for buy
 *ignoring plateform fees
 
 For every buy order, a skew parameter $α$ determines the quantity of the reserves to withdraw.  
-An penalty is added on sell orders to incentivize long-term holding, dictated by the slash-factor $ϕ$.  
+A penalty is added on sell orders to incentivize long-term holding, dictated by the slash-factor $ϕ$.  
 
 <div style="display: flex; flex-direction: row; justify-content: space-between; gap: 10px;">
   <img src="assets/CPwalk.png" alt="constant-product random walk" style="width: 96%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.3s;">
 </div>
 
-*Constant-product random walk. initial reserves: (1e4, 1e4). The random walk is generated from a Laplace distribution with parameters (μ=0, θ=10).*
+*Constant-product random walk. initial reserves: (1e4, 1e4). The random walk is generated from a series of buy and sell orders drawn from a Laplace distribution with parameters (μ=0, θ=10).*
 
 <div style="display: flex; flex-direction: row; justify-content: space-between; gap: 10px;">
   <img src="assets/aBCwalk.png" alt="asymmetric bonding curve random walk" style="width: 96%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.3s;">
 </div>
 
-*Asymmetric AMM random walk. initial reserves: (1e4, 1e4) and initial α: 0.1. The random walk is generated from a Laplace distribution with parameters (μ=0, θ=10).*
+*Asymmetric AMM random walk. initial reserves: (1e4, 1e4) and initial α: 0.1. Laplace parameters (μ=0, θ=10).*
 
-This market-making strategy emerges from the relation between market liquidity and price volatility:
+In practice, the parameter $α$ is dynamically adjusted using the remaining reserves to ensure it reaches an optimal spot in the tradeoff between upside volatility, slippage and total available liquidity.
 
-From the constant-product formula, there is a proportional relation between the reserves liquidity and price increase for a fixed amount bought.
+From the constant-product formula, there is a proportional relation between the reserves liquidity and volatility for a fixed amount bought.
 
 Rose controls volatility by reducing market depth on buy orders, while preserving deep liquidity on sell orders.
 
-The soundness of the system stems from the fact that one can view the rose $aAMM$ as a Just-In-Time liquidity strategy on an AMM pool, JIT withdrawing part of the liquidity on buy orders, then providing back at the updated reserve ratio.
+<!-- The soundness of the system stems from the fact that one can view the rose $aAMM$ as a Just-In-Time liquidity strategy on an AMM pool, JIT withdrawing part of the liquidity on buy orders, then providing back at the updated reserve ratio. -->
+
+The soundness proof of this system is based on the fact that it can be modeled within the AMM model, with a ROSE/ETH pool with the buy case:
+
+- a lp token `burn` of $α$
+- a `swap` of $x$ from $token_0$ to $token_1$
+- a `mint` at the new reserves ratio
+
+and the sell case:
+
+- a `swap` (exact output) of $x$ from $token_1$ to $token_0$ with a sell fee on $token_0$
+
+From this we can compute and derive price of `Rose` is a direct function of the market liquidity.
 
 ### Burns and buybacks
 
@@ -149,21 +161,21 @@ In order to sustain price performance, we introduce the Skew Trading Function:
 $$
 y = \begin{cases}
 R_1 - \frac{α^2K}{α R_0 + x} & \text{for } x > 0 \\
-R_1 - \frac{K}{R_0 + x - ϕ} & \text{for } x < 0
+(\frac{K}{R_0 + x} - R_1) \cdot ϕ & \text{for } x < 0
 \end{cases}
 $$
 
 Here,  
 
 - $α$ is the skew parameter
-- $ϕ$ is the slash-factor
+- $ϕ$ is the slash parameter
 
 We then define the Asymmetric AMM  $aAMM : (α, R_0, R_1, x) -> (R_0′, R_1′, y)$:
 
 $$
 R_0′, R_1′, y = \begin{cases}
 Γ^+(R_0, R_1, x) & \text{for } x > 0 \\
-Γ(R_0, R_1, x) & \text{for } x < 0
+Γ^-(R_0, R_1, x) & \text{for } x < 0
 \end{cases}
 $$
 
@@ -175,13 +187,21 @@ with $Γ^+ : (R_0, R_1, x) -> (R_0′, R_1′, y)$ defined as:
 
 - $y = R_1 - \frac{α^2K}{αR_0 + x}$
 
+and $Γ^- : (R_0, R_1, x) -> (R_0′, R_1′, y)$ defined as:
+
+- $R_0′ = R_0 - x$
+
+- $R_1′ = \frac{K}{R_0′}$
+
+- $y = (R_1′ - R_1) \cdot ϕ$
+
 This asymmetry ensures that selling pressure reduces the reserve ratio more gradually compared to buying pressure.
 
 ### Asymmetric AMM : Continuous model
 
 We then extend the discrete model to continuous time.
 
-Let $ϕ(t)$, the continuous slash-factor function $(0 \leq s_f(t) \leq 1)$.
+Let $ϕ(t)$ be the continuous slash-factor function $(0 \leq ϕ(t) \leq 1)$.
 
 Let $x(t)$, the rate of buying (if positive) or selling (if negative)
 
@@ -189,13 +209,13 @@ Let the spot price $p$ be:
 
 $$p = \frac{R_1(t)}{R_0(t)}$$
 
-Let $α(t)$ be the continuous skew function defined for $(0 \leq α(t) < 1)$ as:
+Let $α(t)$ be the continuous skew function defined for $(0 \leq α(t) < 1)$:
 
 $$α(t) = 1 - (α(0) * \frac{R_1(t)}{R_1(0)})$$
 
 As volume increases over time, $R_1$, the reserves of $token_1$ decreases,meaning that the ratio of reserves removed on buy orders will decrease over time.
 
-we can now define the continuous Asymmetric AMM $caAMM : (α(t), R_0(t), R_1(t), x(t)) -> (R_0′(t), R_1′(t), y(t))$:
+we can now define the continuous Asymmetric AMM : $(α(t), R_0(t), R_1(t), x(t)) -> (R_0′(t), R_1′(t), y(t))$
 
 By definition,
 
@@ -219,7 +239,7 @@ R_1(t) - \frac{α(t)^2K}{α(t)R_0(t) + x(t)} & \text{for } x(t) > 0 \\
 \end{cases}
 $$
 
-The Asymmetric AMM introduces a mechanism exploiting a tradeoff between market liquidity/slippage and upside volatility.
+The Asymmetric AMM introduces a mechanism exploiting a tradeoff between market liquidity, slippage and upside volatility.
 
 ### aAMM Differential Equations
 
@@ -271,7 +291,6 @@ $ forge build --via-ir
 ```shell
 $ forge test --via-ir
 ```
-
 
 #### Gas Snapshots
 

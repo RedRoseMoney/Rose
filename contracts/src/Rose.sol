@@ -11,7 +11,6 @@ pragma solidity ^0.8.24;
  *        volatility by design.
  *
  * todo: fix Transfer events emitting wrong amount
- * todo: adjust (r0 = rose.balance - cumulatedFees) before swaps
  * todo: add collect(address token) external
  */
 contract Rose {
@@ -24,15 +23,11 @@ contract Rose {
       * @notice The Rose blossoms.
       */
     string public constant name = "Rose";
-
     string public constant symbol = "ROSE";
-
     uint8 public constant decimals = 18;
-
     uint256 public constant totalSupply =  1_000_000_000e18;
 
     mapping(address => uint256) private _balanceOf;
-    
     mapping(address => mapping(address => uint256)) private _allowance;
 
     uint cumulatedFees;
@@ -59,9 +54,6 @@ contract Rose {
     uint constant ALLOWANCE_SLOT = 1;
     uint constant CUMULATED_FEES_SLOT = 2;
 
-    /**
-      * @notice Event signatures
-      */
     bytes32 constant TRANSFER_EVENT_SIG = keccak256("Transfer(address,address,uint256)");
     bytes32 constant APPROVAL_EVENT_SIG = keccak256("Approval(address,address,uint256)");
     bytes32 constant BUY_EVENT_SIG = keccak256("Buy(address,uint256,uint256)");
@@ -76,6 +68,8 @@ contract Rose {
 
     /**
       * @notice t=0 state
+      *
+      * @dev The address must recie
       */
     constructor(uint _alpha, uint _phi, uint _r1Init) payable {
         ALPHA_INIT = _alpha;
@@ -127,9 +121,6 @@ contract Rose {
       *         guardian, weaving fate and fortune into the flow of trade,
       *         unseen but ever-present in the balance of the market’s future.
       *         
-      * @dev The Strategist can discriminate between people entering or exiting
-      *      the system, and ca
-      *                                            
       *          ::::                                       °      ::::
       *       :::                    ------------             .        :::
       *      ::               °     |...       ° | - - - - ◓             ::
@@ -182,7 +173,7 @@ contract Rose {
              * R₁ = token₁ reserves
              */
             let x := callvalue()
-            let r0 := selfbalance()
+            let r0 := sub(selfbalance(), sload(CUMULATED_FEES_SLOT))
             let r1 := sload(_THIS_BALANCE_SLOT)
             /*
              * Compute the skew factor α(t)
@@ -259,7 +250,7 @@ contract Rose {
         uint _R1_INIT = R1_INIT;
         bytes32 _THIS_BALANCE_SLOT = SELF_BALANCE_SLOT;
         assembly {
-            r0 := selfbalance()
+            r0 := sub(selfbalance(), sload(CUMULATED_FEES_SLOT))
             r1 := sload(_THIS_BALANCE_SLOT)
             let r1InitR1Ratio := div(mul(r1, 1000000), _R1_INIT)
             let inverseAlpha := div(mul(_ALPHA_INIT, r1InitR1Ratio), 1000000)
@@ -377,7 +368,7 @@ contract Rose {
                 /*
                  *  load market's reserves (R₀, R₁)
                  */
-                let r0 := selfbalance()
+                let r0 := sub(selfbalance(), sload(CUMULATED_FEES_SLOT))
                 let r1 := sload(_THIS_BALANCE_SLOT)
                 let y := value
                 /*
@@ -473,7 +464,7 @@ contract Rose {
                 /*
                  *  load market's reserves (R₀, R₁)
                  */
-                let r0 := selfbalance()
+                let r0 := sub(selfbalance(), sload(CUMULATED_FEES_SLOT))
                 let r1 := sload(_THIS_BALANCE_SLOT)
                 let y := value
                 /*
