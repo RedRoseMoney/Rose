@@ -80,7 +80,7 @@ In practice, the parameter $α$ is dynamically adjusted using the remaining rese
 
 *Spot price of Rose after 1b volume with variation of the α parameter. Log scale, denominated in ETH, starting at 1 with reserves (1e6, 1e6).
 Volume is uniform across both buy and sell orders.  
-reading: for 1b total volume (500m buys and 500m sells), the price mechanically increases by ~1000% for $α$ = 0.01.*
+reading: for 1b total volume (500m buys and 500m sells), the price mechanically increases by ~1000% for α = 0.01.*
 
 By the constant-product formula, there is a proportional relation between the reserves liquidity and volatility for a fixed amount bought. Rose controls volatility by reducing market depth on buy orders, while preserving deep liquidity on sell orders.
 
@@ -88,9 +88,9 @@ By the constant-product formula, there is a proportional relation between the re
   <img src="assets/r0reservelog.png" alt="asymmetric bonding curve random walk" style="width: 96%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.3s;">
 </div>
 
-*Reserve $R_0$, uniform volume of 1b with varying α, log scale.
+*Reserve R₀, uniform volume of 1b with varying α, log scale.
 starting from reserves (1e6, 1e6)  
-reading: for 1b total volume (500m buys and 500m sells), the reserve $R_0$ gets divided by ~10 for $α$ = 0.01.*
+reading: for 1b total volume (500m buys and 500m sells), the reserve R₀ gets divided by ~10 for α = 0.01.*
 
 <!-- The soundness of the system stems from the fact that one can view the rose $aAMM$ as a Just-In-Time liquidity strategy on an AMM pool, JIT withdrawing part of the liquidity on buy orders, then providing back at the updated reserve ratio. -->
 
