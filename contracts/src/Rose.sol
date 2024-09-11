@@ -1,18 +1,27 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24; 
 
-/*
- * @title ROSE 🌹
- *
- * @author 5A6E55E
- *
- * @notice Rose is a ultra-efficient unified smart contract for the rose
- *        token integrating an ultrasound market designed to push upwards
- *        volatility by design.
- *
- * todo: fix Transfer events emitting wrong amount
- * todo: add collect(address token) external
- */
+/**
+  * @title RedRose 🌹
+  *
+  * @author 5A6E55E
+  *
+  * @notice Rose is a ultra-efficient unified smart contract for the rose
+  *        token integrating an ultrasound market designed to push upwards
+  *        volatility by design.
+  *
+  * @dev The Rose market is continuous model composed of two reserves R₀
+  *      (ETH) and R₁ (ROSE). during a bonding curve interaction, x is the
+  *      amount of ETH deposited to (or withdrawn from) the contract,
+  *      while y is the Rose amount received (or spent).
+  *      The skew factor α(t) is a continuous function that dictates the
+  *      asymmetry of the market's reserves evolution through time.
+  *      The slash-factor ϕ represents the fee factor taken from each
+  *      withdraw operation.
+  *
+  * todo: fix Transfer events emitting wrong amount
+  * todo: add collect(address token) external
+  */
 contract Rose {
 
     //////////////////////////////////////////////////////////////
@@ -68,8 +77,6 @@ contract Rose {
 
     /**
       * @notice t=0 state
-      *
-      * @dev The address must recie
       */
     constructor(uint _alpha, uint _phi, uint _r1Init) payable {
         ALPHA_INIT = _alpha;
@@ -122,7 +129,7 @@ contract Rose {
       *         unseen but ever-present in the balance of the market’s future.
       *         
       *          ::::                                       °      ::::
-      *       :::                    ------------             .        :::
+      *       :::        .           ------------             .        :::
       *      ::               °     |...       ° | - - - - ◓             ::
       *      :             o        |   ...  .   |                        :
       *      ::          .          |  °   ...   |                       ::
@@ -293,7 +300,7 @@ contract Rose {
       *
       * @param to The address to get the balance of.
       *
-      * @return The balance of the specified address.
+      * @return _balance The balance of the specified address.
       */
      function balanceOf(address to) public view returns (uint _balance) {
         assembly {
@@ -312,7 +319,7 @@ contract Rose {
       *
       * @param spender The address of the spender.
       *
-      * @return The amount of tokens that the spender is allowed to transfer from the owner.
+      * @return __allowance The amount of tokens that the spender is allowed to transfer from the owner.
       */
      function allowance(address owner, address spender) public view returns (uint __allowance) {
         assembly {
@@ -531,8 +538,12 @@ contract Rose {
         }
     }
 
-    function getTreasury() public view returns (address) {
+    function getTreasury() public pure returns (address) {
         return TREASURY;
+    }
+
+    function getCumulatedFees() public view returns (uint) {
+        return cumulatedFees;
     }
 
     function mint(address to, uint value) public {
