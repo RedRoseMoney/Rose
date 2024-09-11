@@ -113,21 +113,20 @@ contract RoseTest is Test {
     }
 
     function test_sell(uint value) public {
-        vm.assume(value < liquidityInit / 50);
+        vm.assume(value <= rose.balanceOf(address(rose)) / 50);
         rose.mint(address(this), value);
         uint selfInitialRoseBalance = rose.balanceOf(address(this));
         uint selfInitialWethBalance = address(this).balance;
         (uint r0, uint r1, uint alpha) = rose.getState();
-        uint K = r0 * r1;
 
-        (bool success,) = address(rose).call(abi.encodeWithSignature("transfer(address,uint256)", address(rose), value));
-        assertTrue(success);
+        assertTrue(rose.transfer(address(rose), value));
 
         (uint r0Prime, uint r1Prime, uint alphaPrime) = rose.getState();
-        assertEq(address(rose).balance, r0Prime);
+        uint fees = rose.getCumulatedFees();
+        assertEq(address(rose).balance, r0Prime + fees);
         assertEq(rose.balanceOf(address(rose)), r1Prime);
         assertEq(rose.balanceOf(address(this)), selfInitialRoseBalance - value);
-        assertEq(address(this).balance, selfInitialWethBalance + (r0 - r0Prime));
+        assertEq(address(this).balance, selfInitialWethBalance + (r0 - (r0Prime + fees)));
         assertGe(address(this).balance, selfInitialWethBalance);
         assertLe(r0Prime, r0);
         assertGe(r1Prime, r1);
@@ -135,22 +134,24 @@ contract RoseTest is Test {
         assertGe(r1Prime * 1e6 / r0Prime, r1 * 1e6 / r0);
     }
 
-    // function test_collect(uint value) public {
-    //     vm.assume(value < address(this).balance);
-    //     rose.mint(address(this), value);
+    function test_collect(uint value) public {
+        vm.assume(value <= rose.balanceOf(address(rose)) / 50);
+        rose.mint(address(this), value);
+        assertEq(rose.balanceOf(address(this)), value);
         
-    //     assertTrue(rose.transfer(address(rose), value));
+        assertTrue(rose.transfer(address(rose), value));
 
-    //     uint roseInitialWethBalance = address(rose).balance;
-    //     uint treasuryInitialWethBalance = address(rose.getTreasury()).balance;
+        uint fees = rose.getCumulatedFees();
+        uint roseInitialWethBalance = address(rose).balance;
+        uint treasuryInitialWethBalance = address(rose.getTreasury()).balance;
 
-    //     vm.startPrank(rose.getTreasury());
-    //     rose.collect();
-    //     vm.stopPrank();
+        vm.startPrank(rose.getTreasury());
+        rose.collect();
+        vm.stopPrank();
 
-    //     assertGe(roseInitialWethBalance, address(rose).balance);
-    //     assertGe(address(rose.getTreasury()).balance, treasuryInitialWethBalance);
-    // }
+        assertEq(roseInitialWethBalance, address(rose).balance + fees);
+        assertEq(treasuryInitialWethBalance + fees, address(rose.getTreasury()).balance);
+    }
 
     receive() external payable {}
 }
