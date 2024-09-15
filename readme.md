@@ -2,15 +2,15 @@
 
 # [ **Rose** ]
 
-[![Twitter](https://img.shields.io/twitter/follow/ROSE?style=social)](https://twitter.com/redrose)
-[![Website](https://img.shields.io/website?url=https%3A%2F%2Fredrose.com%2F)](https://redrose.com/)
-![GitHub issues](https://img.shields.io/github/issues/redrose/redrose)
+[![Twitter](https://img.shields.io/twitter/follow/ROSE?style=social)](https://twitter.com/redrosemoney)
+<!-- [![Website](https://img.shields.io/website?url=https%3A%2F%2Fredrose.com%2F)](https://redrose.com/) -->
+![GitHub issues](https://img.shields.io/github/issues/RedRoseMoney/rose)
 
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
 
 ![rose](assets/rose.svg)
 
-[Discord](https://discord.gg/redrose) • [twitter](https://twitter.com/redrose) • [Website](https://redrose.com/)
+<!-- [Discord](https://discord.gg/redrose) • [twitter](https://twitter.com/redrose) • [Website](https://redrose.com/) -->
 
 </div>
 
