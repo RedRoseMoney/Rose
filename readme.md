@@ -53,7 +53,7 @@ One of the most profitable trades this year has been shorting worthless VC proje
 
 A nihilistic economic paradigm emerged to challenge the established power structure.
 
-We’ve witnessed the resurgence of memecoins, tokens with no pretense of intrinsic value derived from being loosely tied to a product, and custom lauch bonding curves designed for fairer coin creation.
+We've witnessed the resurgence of memecoins, tokens with no pretense of intrinsic value derived from being loosely tied to a product, and custom lauch bonding curves designed for fairer coin creation.
 
 This is a reality check for everyone. You cannot stitch a token to a product.
 
@@ -84,13 +84,15 @@ A penalty is added on sell orders to incentivize long-term holding, dictated by 
   <img src="assets/CPwalk.png" alt="constant-product random walk" style="width: 96%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.3s;">
 </div>
 
-*Constant-product random walk. initial reserves: (1e4, 1e4). The random walk is generated from a series of buy and sell orders drawn from a Laplace distribution with parameters (μ=0, θ=10).*
+*Constant-product random walk. initial reserves: (10k, 10k). The random walk is generated from a series of buy and sell orders drawn from a Laplace distribution with parameters (μ=0, θ=10), with a total volume of 100k.
+The multiplicative relation is preserved:
+We get the same results with reserves of (1m, 1m) and 10m in volume.*
 
 <div style="display: flex; flex-direction: row; justify-content: space-between; gap: 10px;">
   <img src="assets/aBCwalk.png" alt="asymmetric bonding curve random walk" style="width: 96%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.3s;">
 </div>
 
-*Asymmetric AMM random walk. initial reserves: (1e4, 1e4) and initial α: 0.1. Laplace parameters (μ=0, θ=10).*
+*Asymmetric AMM random walk. initial reserves: (10k, 10k) and initial α: 0.1. Laplace parameters (μ=0, θ=10), with a total volume of 100k.*
 
 #### α parameter
 
@@ -110,9 +112,9 @@ By the constant-product formula, there is a proportional relation between the re
   <img src="assets/r0reservelog.png" alt="asymmetric bonding curve random walk" style="width: 96%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.3s;">
 </div>
 
-*Reserve R₀, uniform volume of 1b with varying α, log scale.
+*Reserve $R_0$ amount, uniform volume of 1b with varying α, log scale.
 starting from reserves (1e6, 1e6).  
-reading: for 1b total volume (500m buys and 500m sells), R₀ decreases by ~90% with α = 0.01.*
+reading: for 1b total volume (500m buys and 500m sells), $R_0$ decreases by ~90% with α = 0.01.*
 
 <!-- The soundness of the system stems from the fact that one can view the rose $aAMM$ as a Just-In-Time liquidity strategy on an AMM pool, JIT withdrawing part of the liquidity on buy orders, then providing back at the updated reserve ratio. -->
 
@@ -151,13 +153,14 @@ From this we can compute and derive the price of `Rose` as a direct function of 
 ROSE protocol is fully decentralized.
 
 Every parameter change is automated, every action taken with the treasury is the result of decentralized coordination between community members.
+Rose intends to go further than traditional DAOs and leverage its treasury to create positive externalities in the real world.
 
 The protocol uses the Regularised Weighted Geometric Median (RWGM) algorithm to democratically allocate treasury funds.
-RWGM is a robust algorithm designed to calculate the geometric median of a set of allocations while mitigating the impact of highly correlated actors.
+RWGM is a robust algorithm designed to calculate the [geometric median](https://arxiv.org/pdf/2106.02394) of a set of allocations while mitigating the impact of highly correlated actors.
 
-we set $W_i$ as the allocation vector of staker $_i$.
-The geometric median guarantees an allocation inside the convex hull of the vectors $W_i$, ensuring limited power for cabals.  
-However, it is known that the geometric median value can be strategically manipulated by polarized actors to make the final allocation closest to their desired allocation vector $(\neq W_i)$.
+we set $W_i$ as the allocation vector of staker $i$.
+The geometric median guarantees an allocation inside the convex hull of the vectors $W$, ensuring limited power to strategic individuals.  
+However, it's known that cabals can manipulate the geometric median, shifting the final allocation towards their preferred vector $(\neq W_i)$ by submitting more weights towards polarized dimensions.  
 Adding a regularization term $λ$ to the geometric median, which penalizes correlated and polarized actors, ensures that manipulation is practically unfeasible.
 
 This makes the Rose protocol resilient to any form of government coersion and censorship, while setting free from the chains of legacy entities.
