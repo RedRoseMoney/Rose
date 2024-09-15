@@ -113,9 +113,9 @@ By the constant-product formula, there is a proportional relation between the re
   <img src="assets/r0reservelog.png" alt="asymmetric bonding curve random walk" style="width: 96%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.3s;">
 </div>
 
-*Reserve $R_0$ amount, uniform volume of 1b with varying α, log scale.
+*Reserve R₀ amount, uniform volume of 1b with varying α, log scale.
 starting from reserves (1e6, 1e6).  
-reading: for 1b total volume (500m buys and 500m sells), $R_0$ decreases by ~90% with α = 0.01.*
+reading: for 1b total volume (500m buys and 500m sells), R₀ decreases by ~90% with α = 0.01.*
 
 <!-- The soundness of the system stems from the fact that one can view the rose $aAMM$ as a Just-In-Time liquidity strategy on an AMM pool, JIT withdrawing part of the liquidity on buy orders, then providing back at the updated reserve ratio. -->
 
@@ -135,7 +135,7 @@ A penalty on sells is added to increase the LP portfolio in the denominating ass
 
 #### Under the AMM model
 
-The soundness proof of this system stems from the fact that aAMMS can be modeled within the AMM model, with a ROSE/ETH liquidity pool.
+The soundness proof of this system stems from the fact that $aAMMs$ can be modeled within the $AMM$ model, with a $ROSE/ETH$ liquidity pool.
 
 For the buy case:
 
