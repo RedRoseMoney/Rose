@@ -49,7 +49,6 @@ contract BlackBox is DepositVerifier, WithdrawVerifier {
     }
 
     function deposit(bytes32 leaf, bytes32 newRoot, bytes32[] memory proof) external payable {
-        // verify that
         assert(verifyDeposit(leaf, msg.value, root, newRoot, proof));
 
         assembly {
@@ -75,6 +74,8 @@ contract BlackBox is DepositVerifier, WithdrawVerifier {
             mstore(add(ptr, 0x20), 1)
             let NULLIFIER_SLOT := keccak256(ptr, 0x40)
             sstore(NULLIFIER_SLOT, true)
+            // send ETH to the user
+            if iszero(call(gas(), msg.sender, value, 0, 0, 0, 0)) { revert(0, 0) }
         }
     }
 }
