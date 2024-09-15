@@ -3,8 +3,8 @@
 # [ **Rose** ]
 
 [![Twitter](https://img.shields.io/twitter/follow/ROSE?style=social)](https://twitter.com/redrosemoney)
-<!-- [![Website](https://img.shields.io/website?url=https%3A%2F%2Fredrose.com%2F)](https://redrose.com/) -->
 ![GitHub issues](https://img.shields.io/github/issues/RedRoseMoney/rose)
+<!-- [![Website](https://img.shields.io/website?url=https%3A%2F%2Fredrose.com%2F)](https://redrose.com/) -->
 
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
 
