@@ -19,7 +19,6 @@
 - [Introduction - The Bloom](#introduction---the-bloom)
 - [Definition - The Garden](#definition---the-garden)
   - [The Asymmetric AMM](#the-asymmetric-amm)
-  - [Burns and buybacks](#burns-and-buybacks)
   - [ROSE DAO](#rose-dao)
 - [Deep Dive - The Roots](#deep-dive---the-roots)
   - [CPMM bonding curve](#cpmm-bonding-curve)
@@ -48,6 +47,27 @@ A Rose, blossoms in the sky.
 
 ## Definition - The Garden
 
+2024 has been a wild year on-chain.  
+CORPs raising millions of dollars waiting to dump on your stupid ass to buy a mansion in beverly hills.  
+One of the most profitable trades this year has been shorting worthless VC projects to zero.
+
+A nihilistic economic paradigm emerged to challenge the established power structure.
+
+We’ve witnessed the resurgence of memecoins, tokens with no pretense of intrinsic value derived from being loosely tied to a product, and custom lauch bonding curves designed for fairer coin creation.
+
+This is a reality check for everyone. You cannot stitch a token to a product.
+
+**In crypto, the token is the product.**
+
+In the midst of this, a flower.
+
+Rose is part of the new generation of cypherpunk finance, improving on the core aspects of the current state:
+
+- **Price performance**: Rose cleverly exploits the AMM model to bind price performance to volume.
+- **Fair distribution**: fairly distributed on day one, without premine, snipers or external funding.
+- **Community owned**: Rose DAO is fully decentralized with no legally-binding entity, leveraging the [RWGM](#rose-dao) algorithm to democratically allocate funds.
+- **Privacy preserving**: Rose supports on-chain privacy through the [Black Box](contracts/src/BlackBox.sol) privacy device, leveraging [pedersen commitments](https://en.wikipedia.org/wiki/Pedersen_commitment), [merkle-trees](https://en.wikipedia.org/wiki/Merkle_tree) and [Zero Knowledge Proofs](https://en.wikipedia.org/wiki/Zero-knowledge_proof) to ensure unlinkability of transactions.
+
 ### the Asymmetric AMM
 
 **Rose** implements an asymmetric bonding curve that optimizes for *price upside volatility* and *deep liquidity* on exits, **mimicking an [Asymmetric AMM](models/ContinuousModel.jl)**.
@@ -72,7 +92,9 @@ A penalty is added on sell orders to incentivize long-term holding, dictated by 
 
 *Asymmetric AMM random walk. initial reserves: (1e4, 1e4) and initial α: 0.1. Laplace parameters (μ=0, θ=10).*
 
-In practice, the parameter $α$ is dynamically adjusted using the remaining reserves to ensure it reaches an optimal spot in the tradeoff between upside volatility, slippage and total available liquidity.
+#### α parameter
+
+In practice, the skew parameter $α$ is dynamically adjusted using the remaining reserves to ensure it reaches an optimal spot in the tradeoff between upside volatility, slippage and total available liquidity.
 
 <div style="display: flex; flex-direction: row; justify-content: space-between; gap: 10px;">
   <img src="assets/SBCUniformVolume.png" alt="asymmetric bonding curve uniform volume" style="width: 96%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.3s;">
@@ -94,21 +116,7 @@ reading: for 1b total volume (500m buys and 500m sells), R₀ decreases by ~90% 
 
 <!-- The soundness of the system stems from the fact that one can view the rose $aAMM$ as a Just-In-Time liquidity strategy on an AMM pool, JIT withdrawing part of the liquidity on buy orders, then providing back at the updated reserve ratio. -->
 
-The soundness proof of this system is based on the fact that it can be modeled within the AMM model, with a ROSE/ETH liquidity pool.
-
-For the buy case:
-
-- The liquidity provider burns $α * lp tokens$
-- Swap of $x$ $token_0$ to $token_1$
-- The liquidity provider mints the maximum amount of lp tokens from withdrawn reserves at the new reserves ratio
-
-and the sell case:
-
-- A swap (exact output) of $x$ units from $token_1$ to $token_0$ with a sell fee on $token_0$
-
-From this we can compute and derive the price of `Rose` as a direct function of $\alpha$ and market liquidity.
-
-### Burns and buybacks
+#### Burns and buybacks
 
 Since a buy order is not executed on full liquidity, the reserves ratio increases faster than a classical AMM pool, thus leaving an excess of `rose` when reinjecting liquidity.  
 This excess amount is removed from the reserves then burned, creating a net deflationary asset, without traditional deflation shortcomings:
@@ -121,6 +129,22 @@ In practice, a burn doesn't directly affect market liquidity and often does not 
 the aAMM ensures mechanical price appreciation from volume by permanently removing liquidity from the market, weighted by the skew parameter $\alpha$.
 
 A penalty on sells is added to increase the LP portfolio in the denominating asset, and is used to proceed to strategic buybacks to further support `Rose` price.
+
+#### Under the AMM model
+
+The soundness proof of this system stems from the fact that aAMMS can be modeled within the AMM model, with a ROSE/ETH liquidity pool.
+
+For the buy case:
+
+- The liquidity provider burns $α * lp tokens$
+- Swap of $x$ $token_0$ to $token_1$
+- The liquidity provider mints the maximum amount of lp tokens from withdrawn reserves at the new reserves ratio
+
+and the sell case:
+
+- A swap (exact output) of $x$ units from $token_1$ to $token_0$ with a sell fee on $token_0$
+
+From this we can compute and derive the price of `Rose` as a direct function of $\alpha$ and market liquidity.
 
 ### ROSE DAO
 
@@ -219,7 +243,7 @@ and $Γ^- : (R_0, R_1, x) -> (R_0′, R_1′, y)$ defined as:
 
 - $y = (R_1 - R_1′) \cdot ϕ$
 
-This asymmetry ensures that the selling pressure reduces the reserve ratio more gradually compared to buying pressure.
+This asymmetry ensures that the selling pressure changes the reserve ratio more gradually compared to buying pressure.
 
 ### Asymmetric AMM : Continuous model
 
@@ -237,7 +261,7 @@ Let $α(t)$ be the continuous skew function defined for $(0 \leq α(t) < 1)$:
 
 $$α(t) = 1 - (α(0) * \frac{R_1(t)}{R_1(0)})$$
 
-As volume increases over time, $R_1$, the reserves of $token_1$ decreases,meaning that the ratio of reserves removed on buy orders will decrease over time.
+As volume increases over time, $R_1$, the reserves of $token_1$ decreases. The ratio of reserves removed on buy orders will decrease over time.
 
 we can now define the continuous Asymmetric AMM : $(α(t), R_0(t), R_1(t), x(t)) -> (R_0′(t), R_1′(t), y(t))$
 
