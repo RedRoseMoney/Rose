@@ -1,26 +1,28 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.24; 
+pragma solidity ^0.8.26; 
 
 /**
-  * @title RedRose 🌹
+  * @title Rose 🌹
   *
   * @author 5A6E55E
   *
-  * @notice Rose is a ultra-efficient unified smart contract for the rose
-  *        token integrating an ultrasound market designed to push upwards
-  *        volatility by design.
+  * @notice Rose is a ultra-efficient unified smart contract for the Rose token
+  *         integrating an ultrasound market designed to push upwards volatility
+  *         by design.
   *
-  * @dev The Rose market is continuous model composed of two reserves R₀
-  *      (ETH) and R₁ (ROSE). during a bonding curve interaction, x is the
-  *      amount of ETH deposited to (or withdrawn from) the contract,
-  *      while y is the Rose amount received (or spent).
+  * @dev The Rose market is a continuous model composed of two reserves R₀ (ETH)
+  *      and R₁ (ROSE). during a bonding curve interaction, x is the amount of
+  *      ETH deposited to (or withdrawn from) the contract, while y is the Rose
+  *      amount received (or spent).
+  *
   *      The skew factor α(t) is a continuous function that dictates the
-  *      asymmetry of the market's reserves evolution through time.
-  *      The slash-factor ϕ represents the fee factor taken from each
-  *      withdraw operation.
+  *      evolution of the market's reserves asymmetry through time.
+  *
+  *      The slash-factor ϕ represents the fee factor taken from each withdraw
+  *      operation.
   *
   * todo: fix Transfer events emitting wrong amount
-  * todo: add collect(address token) external
+  * todo: add collect(address token) external restricted
   */
 contract Rose {
 
@@ -34,7 +36,6 @@ contract Rose {
     string public constant name = "Rose";
     string public constant symbol = "ROSE";
     uint8 public constant decimals = 18;
-    uint256 public constant totalSupply =  1_000_000_000e18;
 
     mapping(address => uint256) private _balanceOf;
     mapping(address => mapping(address => uint256)) private _allowance;
@@ -57,18 +58,21 @@ contract Rose {
     /**
       * @notice constant storage slots
       */
-    bytes32 immutable SELF_BALANCE_SLOT;
-    bytes32 immutable TREASURY_BALANCE_SLOT;
     uint constant BALANCE_OF_SLOT = 0;
     uint constant ALLOWANCE_SLOT = 1;
     uint constant CUMULATED_FEES_SLOT = 2;
+    bytes32 immutable SELF_BALANCE_SLOT;
+    bytes32 immutable TREASURY_BALANCE_SLOT;
 
+    /**
+      * @notice event signatures
+      */
     bytes32 constant TRANSFER_EVENT_SIG = keccak256("Transfer(address,address,uint256)");
     bytes32 constant APPROVAL_EVENT_SIG = keccak256("Approval(address,address,uint256)");
     bytes32 constant BUY_EVENT_SIG = keccak256("Buy(address,uint256,uint256)");
     bytes32 constant SELL_EVENT_SIG = keccak256("Sell(address,uint256,uint256)");
 
-    address constant TREASURY = address(0x76E5);
+    address public immutable TREASURY;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
@@ -78,26 +82,26 @@ contract Rose {
     /**
       * @notice t=0 state
       */
-    constructor(uint _alpha, uint _phi, uint _r1Init) payable {
+    constructor(uint _alpha, uint _phi, uint _r1Init, address _treasury) payable {
         ALPHA_INIT = _alpha;
         PHI_FACTOR =  _phi;
         R1_INIT = _r1Init;
+        TREASURY = _treasury;
 
-        bytes32 _THIS_BALANCE_SLOT;
+        bytes32 _SELF_BALANCE_SLOT;
         bytes32 _TREASURY_BALANCE_SLOT;
-        address _TREASURY = TREASURY;
         assembly {
             let ptr := mload(0x40)
             mstore(ptr, address())
             mstore(add(ptr, 0x20), BALANCE_OF_SLOT)
-            _THIS_BALANCE_SLOT := keccak256(ptr, 0x40)
-            mstore(ptr, _TREASURY)
+            _SELF_BALANCE_SLOT := keccak256(ptr, 0x40)
+            mstore(ptr, _treasury)
             _TREASURY_BALANCE_SLOT := keccak256(ptr, 0x40)
             // set the initial reserves
-            sstore(_THIS_BALANCE_SLOT, _r1Init)
+            sstore(_SELF_BALANCE_SLOT, _r1Init)
         }
 
-        SELF_BALANCE_SLOT = _THIS_BALANCE_SLOT;
+        SELF_BALANCE_SLOT = _SELF_BALANCE_SLOT;
         TREASURY_BALANCE_SLOT = _TREASURY_BALANCE_SLOT;
     }
 
@@ -106,36 +110,36 @@ contract Rose {
     //////////////////////////////////////////////////////////////
 
     /**
-      *        _____
-      *      .'/L|__`.
-      *     / =[_]O|` \
-      *    |   _  |   |
-      *    ;  (_)  ;  |
-      *     '.___.' \  \
-      *      |     | \  `-.
-      *     |    _|  `\    \
-      *      _./' \._   `-._\
-      *    .'/     `.`.   '_.-.
-      *
-      * title: The Strategist
-      *
-      * @notice Long ago, the Strategist was known as the Oracle of the
-      *         Lost Era, a being of great wisdom who guided civilizations
-      *         for centuries. After the collapse of the old world, the
-      *         Oracle withdrew from the affairs of mortals, becoming the
-      *         Strategist, overseeing the rise of the asset born from the
-      *         ashes of forgotten realms. The Strategist remains a silent
-      *         guardian, weaving fate and fortune into the flow of trade,
-      *         unseen but ever-present in the balance of the market’s future.
-      *         
-      *          ::::                                       °      ::::
-      *       :::        .           ------------             .        :::
-      *      ::               °     |...       ° | - - - - ◓             ::
-      *      :             o        |   ...  .   |                        :
-      *      ::          .          |  °   ...   |                       ::
-      *       :::         ◓ - - - - |   .     ...|                     :::
-      *          ::::                ------------                  ::::
-      */
+             _____
+           .'/L|__`.
+          / =[_]O|` \
+         |   _  |   |
+         ;  (_)  ;  |
+          '.___.' \  \
+           |     | \  `-.
+          |    _|  `\    \
+           _./' \._   `-._\
+         .'/     `.`.   '_.-.
+     
+      title: The Strategist
+     
+      @notice Long ago, the Strategist was known as the Oracle of the
+              Lost Era, a being of great wisdom who guided civilizations
+              for centuries. After the collapse of the old world, the
+              Oracle withdrew from the affairs of mortals, becoming the
+              Strategist, overseeing the rise of the asset born from the
+              ashes of forgotten realms. The Strategist remains a silent
+              guardian, weaving fate and fortune into the flow of trade.
+              
+               ::::                                       °      ::::
+            :::        .           ------------             .        :::
+           ::               °     |...       ° | - - - - ◓             ::
+           :             o        |   ...  .   |                        :
+           ::          .          |  °   ...   |                       ::
+            :::         ◓ - - - - |   .     ...|                     :::
+               ::::                ------------                  ::::
+    */
+
 
     /**
       * @notice Receive is the entry point for deposits.
@@ -149,7 +153,7 @@ contract Rose {
       *      with R₁(0) being the initial reserve of ROSE at construction and R₁(t)
       *      the reserve of ROSE at time t.
       *      α(t) is simulating a LP withdraw operation right before the buy. In this
-      *      analogy, the skew factor α(t) represents the proportion of the current
+      *      analogy, the skew factor α(t) represents the fraction of the current
       *      reserves that the LP is withdrawing.
       *      The skew factor is then used to compute the new reserves (R₀′, R₁′) and
       *      the amount out `y` 
@@ -165,7 +169,7 @@ contract Rose {
     receive() external payable {
         uint _ALPHA_INIT = ALPHA_INIT;
         uint _R1_INIT = R1_INIT;
-        bytes32 _THIS_BALANCE_SLOT = SELF_BALANCE_SLOT;
+        bytes32 _SELF_BALANCE_SLOT = SELF_BALANCE_SLOT;
         bytes32 _TREASURY_BALANCE_SLOT = TREASURY_BALANCE_SLOT;
         bytes32 _TRANSFER_EVENT_SIG = TRANSFER_EVENT_SIG;
         bytes32 _BUY_EVENT_SIG = BUY_EVENT_SIG;
@@ -174,14 +178,15 @@ contract Rose {
             mstore(ptr, caller())
             mstore(add(ptr, 0x20), BALANCE_OF_SLOT)
             let CALLER_BALANCE_SLOT := keccak256(ptr, 0x40)
+            let _cumulatedFees := sload(CUMULATED_FEES_SLOT)
             /*
              * x  = msg.value
              * R₀ = token₀ reserves
              * R₁ = token₁ reserves
              */
             let x := callvalue()
-            let r0 := sub(selfbalance(), sload(CUMULATED_FEES_SLOT))
-            let r1 := sload(_THIS_BALANCE_SLOT)
+            let r0 := sub(selfbalance(), _cumulatedFees)
+            let r1 := sload(_SELF_BALANCE_SLOT)
             /*
              * Compute the skew factor α(t)
              *
@@ -211,7 +216,7 @@ contract Rose {
             /*
              * Update the market reserves to (R₀′, R₁′) then update balances
              */
-            sstore(_THIS_BALANCE_SLOT, r1Prime)
+            sstore(_SELF_BALANCE_SLOT, add(r1Prime, _cumulatedFees))
             let balanceOfCaller := sload(CALLER_BALANCE_SLOT)
             sstore(CALLER_BALANCE_SLOT, add(balanceOfCaller, y))
             let balanceOfTreasury := sload(_TREASURY_BALANCE_SLOT)
@@ -255,10 +260,10 @@ contract Rose {
     function getState() public view returns (uint r0, uint r1, uint alpha) {
         uint _ALPHA_INIT = ALPHA_INIT;
         uint _R1_INIT = R1_INIT;
-        bytes32 _THIS_BALANCE_SLOT = SELF_BALANCE_SLOT;
+        bytes32 _SELF_BALANCE_SLOT = SELF_BALANCE_SLOT;
         assembly {
             r0 := sub(selfbalance(), sload(CUMULATED_FEES_SLOT))
-            r1 := sload(_THIS_BALANCE_SLOT)
+            r1 := sload(_SELF_BALANCE_SLOT)
             let r1InitR1Ratio := div(mul(r1, 1000000), _R1_INIT)
             let inverseAlpha := div(mul(_ALPHA_INIT, r1InitR1Ratio), 1000000)
             alpha := sub(1000000, inverseAlpha)
@@ -269,31 +274,32 @@ contract Rose {
     /////////////////////////// ERC20 ////////////////////////////
     //////////////////////////////////////////////////////////////
 
-    /*
-     *           , .-.-,_,
-     *           )`-.>'` (
-     *          /     `\  |
-     *          |       | |
-     *           \     / /
-     *           `=(\ /.=`
-     *            `-;`.-'
-     *              `)|     ,
-     *               ||  .-'|
-     *             ,_||  \_,/
-     *       ,      \|| .'
-     *       |\|\  , ||/
-     *      ,_\` |/| |Y_,
-     *       '-.'-._\||/
-     *          >_.-`Y|
-     *          `|   ||
-     *               ||  
-     *               ||
-     *               ||
-     *
-     * title:  The Rose token
-     *
-     * @notice The ultrasound Rose asset.
-     */
+    /**
+                , .-.-,_,
+                )`-.>'` (
+               /     `\  |
+               |       | |
+                \     / /
+                `=(\ /.=`
+                 `-;`.-'
+                   `)|     ,
+                    ||  .-'|
+                  ,_||  \_,/
+            ,      \|| .'
+            |\|\  , ||/
+           ,_\` |/| |Y_,
+            '-.'-._\||/
+               >_.-`Y|
+               `|   ||
+                    ||  
+                    ||
+                    ||
+     
+      title:  The Rose token
+     
+      @notice The ultrasound Rose token.
+    */
+
 
     /**
       * @notice Returns the balance of the specified address.
@@ -351,7 +357,7 @@ contract Rose {
       */
     function transfer(address to, uint256 value) public returns (bool) {
         uint _PHI_FACTOR = PHI_FACTOR;
-        bytes32 _THIS_BALANCE_SLOT = SELF_BALANCE_SLOT;
+        bytes32 _SELF_BALANCE_SLOT = SELF_BALANCE_SLOT;
         bytes32 _TRANSFER_EVENT_SIG = TRANSFER_EVENT_SIG;
         bytes32 _SELL_EVENT_SIG = SELL_EVENT_SIG;
         assembly {
@@ -376,7 +382,7 @@ contract Rose {
                  *  load market's reserves (R₀, R₁)
                  */
                 let r0 := sub(selfbalance(), sload(CUMULATED_FEES_SLOT))
-                let r1 := sload(_THIS_BALANCE_SLOT)
+                let r1 := sload(_SELF_BALANCE_SLOT)
                 let y := value
                 /*
                  * Only allow sell orders under 2% of Rose's liquidity
@@ -436,7 +442,7 @@ contract Rose {
       */
     function transferFrom(address from, address to, uint256 value) public returns (bool) {
         uint _PHI_FACTOR = PHI_FACTOR;
-        bytes32 _THIS_BALANCE_SLOT = SELF_BALANCE_SLOT;
+        bytes32 _SELF_BALANCE_SLOT = SELF_BALANCE_SLOT;
         bytes32 _TRANSFER_EVENT_SIG = TRANSFER_EVENT_SIG;
         bytes32 _SELL_EVENT_SIG = SELL_EVENT_SIG;
         assembly {
@@ -472,7 +478,7 @@ contract Rose {
                  *  load market's reserves (R₀, R₁)
                  */
                 let r0 := sub(selfbalance(), sload(CUMULATED_FEES_SLOT))
-                let r1 := sload(_THIS_BALANCE_SLOT)
+                let r1 := sload(_SELF_BALANCE_SLOT)
                 let y := value
                 /*
                  * Only allow sell orders under 2% of Rose's liquidity
@@ -536,10 +542,6 @@ contract Rose {
             mstore(ptr, 1)
             return(ptr, 0x20)
         }
-    }
-
-    function getTreasury() public pure returns (address) {
-        return TREASURY;
     }
 
     function getCumulatedFees() public view returns (uint) {

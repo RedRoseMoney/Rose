@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.26;
 
 import {Test, console} from "forge-std/Test.sol";
 import {Rose} from "../src/Rose.sol";
@@ -10,7 +10,7 @@ contract RoseTest is Test {
     uint public liquidityInit = 1e24;
 
     function setUp() public {
-        rose = new Rose{salt: "REDROSE", value: liquidityInit}(1e5, 1e4, liquidityInit);
+        rose = new Rose{salt: "REDROSE", value: liquidityInit}(1e5, 1e4, liquidityInit, address(this));
     }
 
     function test_approve(address to, uint value) public {
@@ -143,14 +143,14 @@ contract RoseTest is Test {
 
         uint fees = rose.getCumulatedFees();
         uint roseInitialWethBalance = address(rose).balance;
-        uint treasuryInitialWethBalance = address(rose.getTreasury()).balance;
+        uint treasuryInitialWethBalance = address(rose.TREASURY()).balance;
 
-        vm.startPrank(rose.getTreasury());
+        vm.startPrank(rose.TREASURY());
         rose.collect();
         vm.stopPrank();
 
         assertEq(roseInitialWethBalance, address(rose).balance + fees);
-        assertEq(treasuryInitialWethBalance + fees, address(rose.getTreasury()).balance);
+        assertEq(treasuryInitialWethBalance + fees, address(rose.TREASURY()).balance);
     }
 
     receive() external payable {}
