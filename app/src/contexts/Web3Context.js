@@ -14,10 +14,14 @@ export const Web3Provider = ({ children }) => {
   const [chainId, setChainId] = useState(null);
   const [signer, setSigner] = useState(null);
   const [rose, setRose] = useState(null);
+  const [reserve0, setReserve0] = useState('0');
+  const [reserve1, setReserve1] = useState('0');
+  const [alpha, setAlpha] = useState('0');
 
   const updateWeb3State = useCallback(async () => {
     if (typeof window.ethereum !== 'undefined' && isConnected) {
       try {
+        console.log('Updating Web3 state');
         const newProvider = new ethers.BrowserProvider(window.ethereum);
         const newSigner = await newProvider.getSigner();
         const address = await newSigner.getAddress();
@@ -39,13 +43,29 @@ export const Web3Provider = ({ children }) => {
           console.error('Error getting Rose balance:', error);
         }
 
+        // Add the new function call
+        const stateContract = new ethers.Contract(
+          rose,
+          ['function getState() view returns (uint256,uint256,uint256)'],
+          newProvider
+        );
+
+        try {
+          const [newReserve0, newReserve1, newAlpha] = await stateContract.getState();
+          setReserve0(ethers.formatEther(newReserve0));
+          setReserve1(ethers.formatEther(newReserve1));
+          setAlpha(ethers.formatUnits(newAlpha, 6));
+        } catch (error) {
+          console.error('Error getting state:', error);
+        }
+
         setProvider(newProvider);
         setSigner(newSigner);
         setChainId(newChainId);
         setBalance(ethers.formatEther(balance));
         setRoseBalance(ethers.formatEther(roseBalance));
         setRose(rose);
-
+        console.log('Web3 state updated');
       } catch (error) {
         console.error('Error updating Web3 state:', error);
       }
@@ -110,7 +130,20 @@ export const Web3Provider = ({ children }) => {
   }, [disconnectWallet, updateWeb3State]);
 
   return (
-    <Web3Context.Provider value={{ isConnected, balance, roseBalance, connectWallet, disconnectWallet, provider, signer, rose, chainId }}>
+    <Web3Context.Provider value={{ 
+      isConnected, 
+      balance, 
+      roseBalance, 
+      connectWallet, 
+      disconnectWallet, 
+      provider, 
+      signer, 
+      rose, 
+      chainId,
+      reserve0,
+      reserve1,
+      alpha
+    }}>
       {children}
     </Web3Context.Provider>
   );

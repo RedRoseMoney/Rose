@@ -70,6 +70,11 @@ const TerminalContent = styled.div`
     height: 0;
     display: none;  /* Chrome, Safari, and Opera */
   }
+
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
 `;
 
 const InputContainer = styled.div`
@@ -93,6 +98,10 @@ const OutputDiv = styled.div`
   overflow-wrap: break-word;
   font-size: 0.8em;
   color: #00ff00;
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
 `;
 
 const TabHint = styled.span`
@@ -113,12 +122,12 @@ const Terminal = () => {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [showTabCompletion, setShowTabCompletion] = useState(false);
   const [showTabHint, setShowTabHint] = useState(true);
-  const [chartData, setChartData] = useState([10, 20, 15, 25, 30, 22, 18, 32, 45, 41, 50, 56, 62, 48, 45, 51, 43, 41, 38, 50, 48,47, 53, 56, 57]);
+  const [chartData, setChartData] = useState([10, 20, 15, 25, 30, 22, 18, 32, 45, 41, 50, 56, 62, 48, 45, 51, 43, 41, 38, 50, 48,47, 53, 56, 57, 75, 86, 95, 70, 56, 76]);
   const [asyncOutput, setAsyncOutput] = useState(null);
   const inputRef = useRef(null);
   const terminalContentRef = useRef(null);
 
-  const { isConnected, signer, provider, balance: nativeBalance , roseBalance, rose} = useWeb3();
+  const { isConnected, signer, provider, balance: nativeBalance , roseBalance, rose, reserve0, reserve1, alpha} = useWeb3();
 
   const availableCommands = ['deposit', 'withdraw', 'transfer', 'balance', 'address', 'clear', 'exit'];
 
@@ -155,41 +164,65 @@ const Terminal = () => {
     const numericBalance = parseFloat(nativeBalance);
     const numericRoseBalance = parseFloat(roseBalance);
     if (amount > numericRoseBalance) {
-      return `Insufficient funds. Current balance: ${numericRoseBalance.toFixed(4)} 🌹`;
+      return `Insufficient funds. Current balance: ${numericRoseBalance.toFixed(4)}🌹`;
+    }
+    const numericReserve1 = parseFloat(reserve1);
+    if (amount > numericReserve1) {
+      return `Amount too large, can only sell up to 2% of the pool. Current reserve: ${numericReserve1.toFixed(4)}🌹`;
     }
     const roseContract = new ethers.Contract(
       rose,
       ['function transfer(address to, uint256 amount) returns (bool)'],
-      provider
+      signer
     );
-    const tx = await roseContract.transfer(rose, amount);
+    const tx = await roseContract.transfer(rose, ethers.parseUnits(amount.toString(), 18));
     await tx.wait();
-    const newBalance = nativeBalance;
-    return `Withdrawn ${amount}🌹. New balance: ${(numericRoseBalance + amount).toFixed(4)}🌹
-    Received ${newBalance - numericBalance}ETH`;
-
+    
+    // Fetch the updated native balance
+    const updatedNativeBalance = await provider.getBalance(signer.address);
+    const formattedUpdatedBalance = ethers.formatEther(updatedNativeBalance);
+    
+    return `Withdrawn ${amount}🌹. New balance: ${(numericRoseBalance - amount).toFixed(4)}🌹
+Received ${(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(4)} ETH`;
   };
 
   const transferCall = async (amount, recipient) => {
     const numericRoseBalance = parseFloat(roseBalance);
     if (amount > numericRoseBalance) {
-      return `Insufficient funds. Current balance: ${numericRoseBalance.toFixed(4)} 🌹`;
+      return `Insufficient funds. Current balance: ${numericRoseBalance.toFixed(4)}🌹`;
     }
-    if (!ethers.isAddress(recipient) || provider.resolveName(recipient) !== null) {
-      return `<pre>Invalid recipient address.
+
+    let resolvedAddress;
+    try {
+      resolvedAddress = ethers.isAddress(recipient) ? recipient : await provider.resolveName(recipient);
+    } catch (error) {
+      console.error("Error resolving ENS name:", error);
+    }
+
+    if (!resolvedAddress) {
+      return `<pre>Invalid recipient address or unresolved ENS name.
 
     usage: transfer &lt;amount&gt; &lt;recipient&gt;
+
+    example: transfer 10 rosemoney.eth
         </pre>
        `;
     }
+
     const roseContract = new ethers.Contract(
       rose,
       ['function transfer(address to, uint256 amount) returns (bool)'],
-      provider
+      signer
     );
-    const tx = await roseContract.transfer(recipient, amount);
-    await tx.wait();
-    return `Transferred ${amount}🌹 to ${recipient}. New balance: ${(numericRoseBalance - amount).toFixed(4)}🌹`;
+
+    try {
+      const tx = await roseContract.transfer(resolvedAddress, ethers.parseUnits(amount.toString(), 18));
+      await tx.wait();
+      return `Transferred ${amount}🌹 to ${recipient}. New balance: ${(numericRoseBalance - amount).toFixed(4)}🌹`;
+    } catch (error) {
+      console.error("Error during transfer:", error);
+      return `Error during transfer: ${error.message}`;
+    }
   };
 
   const commands = {
@@ -228,7 +261,7 @@ const Terminal = () => {
       }
       
       // Set initial processing message
-      setAsyncOutput(`Processing withdrawal of ${amount} 🌹...`);
+      setAsyncOutput(`Processing withdrawal of ${amount}🌹...`);
 
       withdrawCall(amount)
         .then((result) => {
@@ -253,7 +286,7 @@ const Terminal = () => {
       }
       
       // Set initial processing message
-      setAsyncOutput(`Processing transfer of ${amount} 🌹 to ${recipient}...`);
+      setAsyncOutput(`Processing transfer of ${amount}🌹 to ${recipient}...`);
 
       transferCall(amount, recipient)
         .then((result) => {
@@ -400,12 +433,31 @@ const Terminal = () => {
     }
   }, [asyncOutput]);
 
+  const handleTextSelection = () => {
+    const selectedText = window.getSelection().toString();
+    if (selectedText) {
+      navigator.clipboard.writeText(selectedText).then(
+        () => {
+          console.log('Text copied to clipboard');
+          // Optionally, you can show a brief notification to the user
+        },
+        (err) => {
+          console.error('Failed to copy text: ', err);
+        }
+      );
+    }
+  };
+
   return (
     <TerminalContainer onClick={() => inputRef.current.focus()}>
       <LogoContainer>
         <StyledLogo />
       </LogoContainer>
-      <TerminalContent ref={terminalContentRef}>
+      <TerminalContent 
+        ref={terminalContentRef}
+        onMouseUp={handleTextSelection}
+        onTouchEnd={handleTextSelection}
+      >
         {history.map((item, index) => (
           <div key={index}>
             {item.type === 'command' ? (
