@@ -1,5 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
+import { useWeb3 } from '../contexts/Web3Context';
+import { usePopUp } from '../contexts/PopUpContext';
+import { useState } from 'react';
 
 const BarContainer = styled.div`
   display: flex;
@@ -13,7 +16,7 @@ const BarContainer = styled.div`
 `;
 
 const ConnectButton = styled.span`
-  color: ${props => props.isConnected ? '#4CAF50' : '#2196F3'};
+  color: ${props => props.$isConnected ? '#4CAF50' : '#2196F3'};
   font-size: 12px;
   cursor: pointer;
   transition: color 0.3s ease, transform 0.2s ease;
@@ -29,7 +32,7 @@ const ConnectButton = styled.span`
 
 const Balance = styled.div`
   font-size: 12px;
-  color: '#00ff00';
+  color: #00ff00;
   display: flex;
   align-items: center;
   position: absolute;
@@ -42,18 +45,59 @@ const EthLogo = styled.span`
   font-size: 14px;
   margin-left: 2px;
   top = 50%;
-  color: '#00ff00';
+  color: #00ff00;
 `;
 
-const BottomBar = ({ isConnected, balance, onConnect }) => {
+const CurrencyToggle = styled(EthLogo)`
+  cursor: pointer;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+`;
+
+const BottomBar = () => {
+  const { isConnected, balance, roseBalance, connectWallet, disconnectWallet } = useWeb3();
+  const { showPopUp } = usePopUp();
+  const [showEth, setShowEth] = useState(true);
+
+  const handleConnect = async () => {
+    if (isConnected) {
+      await disconnectWallet();
+    } else {
+      try {
+        await connectWallet();
+      } catch (error) {
+        showPopUp('Failed to connect wallet: ' + error.message);
+        console.error('Failed to connect wallet:', error);
+      }
+    }
+  };
+
+  const toggleCurrency = () => {
+    setShowEth(!showEth);
+  };
+
+  const displayBalance = () => {
+    if (!isConnected) return '0.0000';
+    const value = showEth ? parseFloat(balance) : parseFloat(roseBalance);
+    if (value < 0.0001) {
+      return '<0.0001';
+    }
+    return value.toFixed(4);
+  };
+
   return (
     <BarContainer>
-      <ConnectButton isConnected={isConnected} onClick={onConnect}>
-        {isConnected ? 'Connected' : 'Connect'}
+      <ConnectButton $isConnected={isConnected} onClick={handleConnect}>
+        {isConnected ? 'Disconnect' : 'Connect'}
       </ConnectButton>
       <Balance>
-        {isConnected ? balance.toFixed(2) : '0.00'}
-        <EthLogo>ETH</EthLogo>
+        {displayBalance()}
+        <CurrencyToggle onClick={toggleCurrency}>
+          {showEth ? 'ETH' : '🌹'}
+        </CurrencyToggle>
       </Balance>
     </BarContainer>
   );

@@ -23,6 +23,7 @@ const CompletionItem = styled.div`
   font-size: 14px;
   transition: background-color 0.2s ease;
   outline: none; /* Remove focus outline */
+  color: skyblue;
 
   &:hover, &.selected {
     background-color: rgba(255, 255, 255, 0.1);
@@ -45,10 +46,6 @@ const TabCompletion = ({ options, inputText, onSelect }) => {
     const columns = Math.floor(containerRef.current.clientWidth / 130);
     const rows = Math.ceil(filteredOptions.length / columns);
 
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      setSelectedIndex((prevIndex) => (prevIndex + 1) % filteredOptions.length);
-    }
     if (e.key === 'ArrowRight') {
       e.preventDefault();
       setSelectedIndex((prevIndex) => (prevIndex + 1) % filteredOptions.length);
@@ -70,6 +67,9 @@ const TabCompletion = ({ options, inputText, onSelect }) => {
     } else if (e.key === 'Enter') {
       e.preventDefault();
       onSelect(filteredOptions[selectedIndex]);
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      onSelect('');
     } else if (e.key === 'Escape') {
       e.preventDefault();
       onSelect('');

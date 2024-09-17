@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { ethers } from 'ethers';
 import styled from 'styled-components';
+import { useWeb3 } from '../contexts/Web3Context';
 import Prompt from './Prompt';
 import TabCompletion from './TabCompletion';
 import BottomBar from './BottomBar';
@@ -24,9 +26,34 @@ const LogoContainer = styled.div`
 
 const StyledLogo = styled(Logo)`
   width: auto;
-  height: auto; /* Maintain aspect ratio by adjusting the height */
+  height: auto;
+  position: relative;
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: -30px;
+    left: -30px;
+    right: -30px;
+    bottom: -30px;
+    border-radius: 50%;
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.5) 0%, transparent 70%);
+    animation: glowMotion 2s ease-in-out infinite;
+  }
+
+  @keyframes glowMotion {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 0.3;
+    }
+    50% {
+      transform: scale(1.5);
+      opacity: 0.8;
+    }
+  }
 `;
-  
+
 const TerminalContent = styled.div`
   flex-grow: 1;
   overflow-y: auto;
@@ -61,10 +88,11 @@ const Input = styled.input`
 `;
 
 const OutputDiv = styled.div`
-  white-space: pre-wrap;       /* Preserves whitespace and wraps text */
-  word-wrap: break-word;       /* Breaks long words if needed */
-  overflow-wrap: break-word;   /* Ensures long words break correctly */
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
   font-size: 0.8em;
+  color: #00ff00;
 `;
 
 const TabHint = styled.span`
@@ -74,6 +102,10 @@ const TabHint = styled.span`
   font-size: 0.8em;
 `;
 
+const CommandSpan = styled.span`
+  color: skyblue;
+`;
+
 const Terminal = () => {
   const [input, setInput] = useState('');
   const [history, setHistory] = useState([]);
@@ -81,13 +113,14 @@ const Terminal = () => {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [showTabCompletion, setShowTabCompletion] = useState(false);
   const [showTabHint, setShowTabHint] = useState(true);
-  const [isConnected, setIsConnected] = useState(false);
-  const [balance, setBalance] = useState(0);
-  const [chartData, setChartData] = useState([10, 20, 15, 25, 30, 22, 18]);
+  const [chartData, setChartData] = useState([10, 20, 15, 25, 30, 22, 18, 32, 45, 41, 50, 56, 62, 48, 45, 51, 43, 41, 38, 50, 48,47, 53, 56, 57]);
+  const [asyncOutput, setAsyncOutput] = useState(null);
   const inputRef = useRef(null);
   const terminalContentRef = useRef(null);
 
-  const availableCommands = ['deposit', 'withdraw', 'echo', 'clear', 'exit'];
+  const { isConnected, signer, provider, balance: nativeBalance , roseBalance, rose} = useWeb3();
+
+  const availableCommands = ['deposit', 'withdraw', 'transfer', 'balance', 'address', 'clear', 'exit'];
 
   useEffect(() => {
     inputRef.current.focus();
@@ -99,17 +132,64 @@ const Terminal = () => {
     }
   }, [history]);
 
-  const depositCall = (amount) => {
-    if (amount > balance) {
-      return `Insufficient funds. Current balance: ${balance.toFixed(4)} ETH`;
+  const depositCall = async (amount) => {
+    const numericBalance = parseFloat(nativeBalance);
+    if (amount > numericBalance) {
+      return `Insufficient funds. Current balance: ${numericBalance.toFixed(4)} ETH`;
     }
-    setBalance(prevBalance => prevBalance - amount);
-    return `Deposited ${amount} ETH. New balance: ${(balance - amount).toFixed(4)} ETH`;
+  
+    try {
+      const tx = await signer.sendTransaction({
+        to: rose,
+        value: ethers.parseEther(amount.toString())
+      });
+      await tx.wait();
+      return `Deposited ${amount} ETH. New balance: ${(numericBalance - amount).toFixed(4)} ETH`;
+    } catch (error) {
+      console.error("Error during deposit:", error);
+      return `Error during deposit: ${error.message}`;
+    }
   };
 
-  const withdrawCall = (amount) => {
-    setBalance(prevBalance => prevBalance + amount);
-    return `Withdrawn ${amount} ETH. New balance: ${(balance + amount).toFixed(4)} ETH`;
+  const withdrawCall = async (amount) => {
+    const numericBalance = parseFloat(nativeBalance);
+    const numericRoseBalance = parseFloat(roseBalance);
+    if (amount > numericRoseBalance) {
+      return `Insufficient funds. Current balance: ${numericRoseBalance.toFixed(4)} 🌹`;
+    }
+    const roseContract = new ethers.Contract(
+      rose,
+      ['function transfer(address to, uint256 amount) returns (bool)'],
+      provider
+    );
+    const tx = await roseContract.transfer(rose, amount);
+    await tx.wait();
+    const newBalance = nativeBalance;
+    return `Withdrawn ${amount}🌹. New balance: ${(numericRoseBalance + amount).toFixed(4)}🌹
+    Received ${newBalance - numericBalance}ETH`;
+
+  };
+
+  const transferCall = async (amount, recipient) => {
+    const numericRoseBalance = parseFloat(roseBalance);
+    if (amount > numericRoseBalance) {
+      return `Insufficient funds. Current balance: ${numericRoseBalance.toFixed(4)} 🌹`;
+    }
+    if (!ethers.isAddress(recipient) || provider.resolveName(recipient) !== null) {
+      return `<pre>Invalid recipient address.
+
+    usage: transfer &lt;amount&gt; &lt;recipient&gt;
+        </pre>
+       `;
+    }
+    const roseContract = new ethers.Contract(
+      rose,
+      ['function transfer(address to, uint256 amount) returns (bool)'],
+      provider
+    );
+    const tx = await roseContract.transfer(recipient, amount);
+    await tx.wait();
+    return `Transferred ${amount}🌹 to ${recipient}. New balance: ${(numericRoseBalance - amount).toFixed(4)}🌹`;
   };
 
   const commands = {
@@ -119,56 +199,120 @@ const Terminal = () => {
         return `<pre>Invalid amount. Please enter a positive number.
             
     usage: deposit &lt;amount&gt;
-            
-This command will return a note allowing an account to withdraw the deposited funds later.
         </pre>
        `;
-            
       }
-      return depositCall(amount);
+      
+      // Set initial processing message
+      setAsyncOutput(`Processing deposit of ${amount} ETH...`);
+
+      depositCall(amount)
+        .then((result) => {
+          setAsyncOutput(result);
+        })
+        .catch((error) => {
+          console.error(error);
+          setAsyncOutput(`Error during deposit: ${error.message}`);
+        });
+
+      return null; // Return null to prevent immediate output
     },
     withdraw: (args) => {
       const amount = parseFloat(args[0]);
       if (isNaN(amount) || amount <= 0) {
         return `<pre>Invalid amount. Please enter a positive number.
 
-    usage: withdraw &lt;note&gt;
+    usage: withdraw &lt;amount&gt;
         </pre>
        `;
       }
-      return withdrawCall(amount);
-    },
-    echo: (args) => {
-      if (!args[0]) {
-        return `<pre>available commands:
-    echo &lt;text&gt; - prints the text
-    echo &lt;address&gt; - prints the wallet address
-    echo &lt;balance&gt; - prints the balance of the connected account
-    echo &lt;status&gt; - prints the connection status
-    echo &lt;commands&gt; - prints the available commands
-    echo &lt;history&gt; - prints the command history
-        </pre>`;
-    } else if (args[0] === 'balance') {
-        return `Current balance: ${balance.toFixed(4)} ETH`;
-      } else if (args[0] === 'status') {
-        return `Connection status: ${isConnected ? 'Connected' : 'Disconnected'}`;
-      } else if (args[0] === 'commands') {
-        return `Available commands: ${availableCommands.join(', ')}`;
-      } else if (args[0] === 'history') {
-        return `Command history: ${commandHistory.join(', ')}`;
-      } else if (args[0] === 'address') {
-        return `Wallet address: 0x1234...5678`;
-      } else {
-        args.join(' ')
-      }
+      
+      // Set initial processing message
+      setAsyncOutput(`Processing withdrawal of ${amount} 🌹...`);
 
+      withdrawCall(amount)
+        .then((result) => {
+          setAsyncOutput(result);
+        })
+        .catch((error) => {
+          console.error(error);
+          setAsyncOutput(`Error during withdrawal: ${error.message}`);
+        });
+
+      return null; // Return null to prevent immediate output
     },
-    clear: () => {
+    transfer: (args) => {
+      const amount = parseFloat(args[0]);
+      const recipient = args[1];
+      if (isNaN(amount) || amount <= 0 || args.length < 2) {
+        return `<pre>Please enter a positive number and a valid destination address.
+
+    usage: transfer &lt;amount&gt; &lt;recipient&gt;
+        </pre>
+       `;
+      }
+      
+      // Set initial processing message
+      setAsyncOutput(`Processing transfer of ${amount} 🌹 to ${recipient}...`);
+
+      transferCall(amount, recipient)
+        .then((result) => {
+          setAsyncOutput(result);
+        })
+        .catch((error) => {
+          console.error(error);
+          setAsyncOutput(`Error during transfer: ${error.message}`);
+        });
+
+      return null; // Return null to prevent immediate output
+    },
+    balance: (args) => {
+      if (args.length > 0) {
+        return `<pre>balance does not take additional arguments.
+
+    usage: balance
+        </pre>
+       `;
+      }
+      if (nativeBalance) {
+        const numericBalance = parseFloat(nativeBalance);
+        return `Current balance: ${numericBalance.toFixed(4)} ETH`;
+      }
+      return 'No wallet connected.';
+    },
+    address: (args) => {
+      if (args.length > 0) {
+        return `<pre>address does not take additional arguments.
+
+    usage: address
+        </pre>
+       `;
+      }
+      if (signer) {
+        return `Wallet address: ${signer.address}`;
+      }
+      return 'No wallet connected.';
+    },
+    clear: (args) => {
+      if (args.length > 0) {
+        return `<pre>clear does not take additional arguments.
+
+    usage: clear
+        </pre>
+       `;
+      }
       setHistory([]);
       setShowTabHint(true);
       return '';
     },
-    exit: () => {
+    exit: (args) => {
+      if (args.length > 0) {
+        return `<pre>exit does not take additional arguments.
+
+    usage: exit
+        </pre>
+       `;
+      }
       window.close();
       return 'Closing terminal...';
     },
@@ -194,16 +338,14 @@ This command will return a note allowing an account to withdraw the deposited fu
       setHistory([...history, { type: 'command', content: trimmedInput }]);
 
       if (commands[command]) {
-        // if not connected
         let out = '';
         if (!isConnected && command !== 'exit') {
           out = 'Please connect your wallet.';
         } else {
           out = commands[command](args);
         }
-        const output = out;
-        if (output) {
-          setHistory((prev) => [...prev, { type: 'output', content: output }]);
+        if (out !== null) {
+          setHistory((prev) => [...prev, { type: 'output', content: out }]);
         }
       } else {
         setHistory((prev) => [...prev, { type: 'output', content: `Command not found: ${command}` }]);
@@ -218,8 +360,8 @@ This command will return a note allowing an account to withdraw the deposited fu
       //   // Cycle through tab completion options
       //   setTabCompletionIndex((prevIndex) => (prevIndex + 1) % availableCommands.length);
       // } else {
-        setShowTabCompletion(true);
-        // setTabCompletionIndex(0);
+      setShowTabCompletion(true);
+      // setTabCompletionIndex(0);
       // }
     } else if (e.key === 'Escape') {
       e.preventDefault();
@@ -251,14 +393,12 @@ This command will return a note allowing an account to withdraw the deposited fu
     inputRef.current.focus();
   };
 
-  const handleConnect = () => {
-    setIsConnected(!isConnected);
-    if (!isConnected) {
-      setBalance(Math.random() * 100);
-    } else {
-      setBalance(0);
+  useEffect(() => {
+    if (asyncOutput !== null) {
+      setHistory((prev) => [...prev, { type: 'output', content: asyncOutput }]);
+      setAsyncOutput(null);
     }
-  };
+  }, [asyncOutput]);
 
   return (
     <TerminalContainer onClick={() => inputRef.current.focus()}>
@@ -268,11 +408,13 @@ This command will return a note allowing an account to withdraw the deposited fu
       <TerminalContent ref={terminalContentRef}>
         {history.map((item, index) => (
           <div key={index}>
-            {item.type === 'command' ? <Prompt /> : null}
-            {item.type === 'output' ? (
-              <OutputDiv dangerouslySetInnerHTML={{ __html: item.content }} />
+            {item.type === 'command' ? (
+              <>
+                <Prompt />
+                <CommandSpan>{item.content}</CommandSpan>
+              </>
             ) : (
-              item.content
+              <OutputDiv dangerouslySetInnerHTML={{ __html: item.content }} />
             )}
           </div>
         ))}
@@ -292,7 +434,7 @@ This command will return a note allowing an account to withdraw the deposited fu
         )}
       </TerminalContent>
       <Chart data={chartData} />
-      <BottomBar isConnected={isConnected} balance={balance} onConnect={handleConnect} />
+      <BottomBar />
     </TerminalContainer>
   );
 };
