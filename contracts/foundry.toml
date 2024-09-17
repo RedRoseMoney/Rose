@@ -5,5 +5,5 @@ libs = ["lib"]
 
 [fuzz]
 
-runs = 4096
+runs = 8192
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
