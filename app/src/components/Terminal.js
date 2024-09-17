@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ethers } from 'ethers';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { useWeb3 } from '../contexts/Web3Context';
 import Prompt from './Prompt';
 import TabCompletion from './TabCompletion';
 import BottomBar from './BottomBar';
-import { ReactComponent as Logo } from '../assets/rose.svg';
+import asciiArt from '../assets/ascii-art.txt';
 import Chart from './Chart';
+import { FaCaretUp, FaCaretRight } from 'react-icons/fa6';
 
 const TerminalContainer = styled.div`
   background-color: #1e1e1e;
@@ -18,40 +19,21 @@ const TerminalContainer = styled.div`
   flex-direction: column;
 `;
 
-const LogoContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
+const beeMotion = keyframes`
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(0.5px, 0.5px) rotate(0.5deg); }
+  50% { transform: translate(0, 1px) rotate(0deg); }
+  75% { transform: translate(-0.5px, 0.5px) rotate(-0.5deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
 `;
 
-const StyledLogo = styled(Logo)`
-  width: auto;
-  height: auto;
-  position: relative;
-  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: -30px;
-    left: -30px;
-    right: -30px;
-    bottom: -30px;
-    border-radius: 50%;
-    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.5) 0%, transparent 70%);
-    animation: glowMotion 2s ease-in-out infinite;
-  }
-
-  @keyframes glowMotion {
-    0%, 100% {
-      transform: scale(1);
-      opacity: 0.3;
-    }
-    50% {
-      transform: scale(1.5);
-      opacity: 0.8;
-    }
-  }
+const AsciiArtContainer = styled.pre`
+  font-size: 0.3em;
+  line-height: 1;
+  color: #00ff00;
+  text-align: center;
+  margin-bottom: 20px;
+  animation: ${props => props.isAnimating ? beeMotion : 'none'} 0.5s infinite;
 `;
 
 const TerminalContent = styled.div`
@@ -115,6 +97,27 @@ const CommandSpan = styled.span`
   color: skyblue;
 `;
 
+const HelpContainer = styled.div`
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 0.8em;
+  color: #ccc;
+`;
+
+const HelpItem = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+`;
+
+const HelpIcon = styled.span`
+  margin-right: 5px;
+`;
+
 const Terminal = () => {
   const [input, setInput] = useState('');
   const [history, setHistory] = useState([]);
@@ -124,12 +127,20 @@ const Terminal = () => {
   const [showTabHint, setShowTabHint] = useState(true);
   const [chartData, setChartData] = useState([10, 20, 15, 25, 30, 22, 18, 32, 45, 41, 50, 56, 62, 48, 45, 51, 43, 41, 38, 50, 48,47, 53, 56, 57, 75, 86, 95, 70, 56, 76]);
   const [asyncOutput, setAsyncOutput] = useState(null);
+  const [asciiLogo, setAsciiLogo] = useState('');
+  const [isAnimating, setIsAnimating] = useState(false);
   const inputRef = useRef(null);
   const terminalContentRef = useRef(null);
 
   const { isConnected, signer, provider, balance: nativeBalance , roseBalance, rose, reserve0, reserve1, alpha} = useWeb3();
 
   const availableCommands = ['deposit', 'withdraw', 'transfer', 'balance', 'address', 'clear', 'exit'];
+
+  useEffect(() => {
+    fetch(asciiArt)
+      .then(response => response.text())
+      .then(text => setAsciiLogo(text));
+  }, []);
 
   useEffect(() => {
     inputRef.current.focus();
@@ -140,6 +151,15 @@ const Terminal = () => {
       terminalContentRef.current.scrollTop = terminalContentRef.current.scrollHeight;
     }
   }, [history]);
+
+  const animateLogo = async (callback) => {
+    setIsAnimating(true);
+    try {
+      await callback();
+    } finally {
+      setIsAnimating(false);
+    }
+  };
 
   const depositCall = async (amount) => {
     const numericBalance = parseFloat(nativeBalance);
@@ -239,14 +259,10 @@ Received ${(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(4)} ET
       // Set initial processing message
       setAsyncOutput(`Processing deposit of ${amount} ETH...`);
 
-      depositCall(amount)
-        .then((result) => {
-          setAsyncOutput(result);
-        })
-        .catch((error) => {
-          console.error(error);
-          setAsyncOutput(`Error during deposit: ${error.message}`);
-        });
+      animateLogo(async () => {
+        const result = await depositCall(amount);
+        setAsyncOutput(result);
+      });
 
       return null; // Return null to prevent immediate output
     },
@@ -263,14 +279,10 @@ Received ${(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(4)} ET
       // Set initial processing message
       setAsyncOutput(`Processing withdrawal of ${amount}🌹...`);
 
-      withdrawCall(amount)
-        .then((result) => {
-          setAsyncOutput(result);
-        })
-        .catch((error) => {
-          console.error(error);
-          setAsyncOutput(`Error during withdrawal: ${error.message}`);
-        });
+      animateLogo(async () => {
+        const result = await withdrawCall(amount);
+        setAsyncOutput(result);
+      });
 
       return null; // Return null to prevent immediate output
     },
@@ -288,14 +300,10 @@ Received ${(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(4)} ET
       // Set initial processing message
       setAsyncOutput(`Processing transfer of ${amount}🌹 to ${recipient}...`);
 
-      transferCall(amount, recipient)
-        .then((result) => {
-          setAsyncOutput(result);
-        })
-        .catch((error) => {
-          console.error(error);
-          setAsyncOutput(`Error during transfer: ${error.message}`);
-        });
+      animateLogo(async () => {
+        const result = await transferCall(amount, recipient);
+        setAsyncOutput(result);
+      });
 
       return null; // Return null to prevent immediate output
     },
@@ -450,9 +458,15 @@ Received ${(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(4)} ET
 
   return (
     <TerminalContainer onClick={() => inputRef.current.focus()}>
-      <LogoContainer>
-        <StyledLogo />
-      </LogoContainer>
+      <AsciiArtContainer isAnimating={isAnimating}>{asciiLogo}</AsciiArtContainer>
+      <HelpContainer>
+        <HelpItem><HelpIcon>⇥</HelpIcon> for options</HelpItem>
+        <HelpItem><HelpIcon><FaCaretUp /></HelpIcon> for historic commands</HelpItem>
+        <HelpItem><HelpIcon>↵</HelpIcon> to run a command</HelpItem>
+        <HelpItem>Click ticker to switch balance</HelpItem>
+        <HelpItem>Click on the balance to copy</HelpItem>
+        <HelpItem>Select text to copy</HelpItem>
+      </HelpContainer>
       <TerminalContent 
         ref={terminalContentRef}
         onMouseUp={handleTextSelection}

@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { useWeb3 } from '../contexts/Web3Context';
 import { usePopUp } from '../contexts/PopUpContext';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 const BarContainer = styled.div`
   display: flex;
@@ -57,6 +57,13 @@ const CurrencyToggle = styled(EthLogo)`
   }
 `;
 
+const BalanceText = styled.span`
+  cursor: pointer;
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
 const BottomBar = () => {
   const { isConnected, balance, roseBalance, connectWallet, disconnectWallet } = useWeb3();
   const { showPopUp } = usePopUp();
@@ -88,13 +95,20 @@ const BottomBar = () => {
     return value.toFixed(4);
   };
 
+  const copyBalance = useCallback(() => {
+    const balanceToCopy = showEth ? balance : roseBalance;
+    navigator.clipboard.writeText(balanceToCopy)
+      .then(() => showPopUp('Balance copied to clipboard'))
+      .catch(err => showPopUp('Failed to copy balance: ' + err.message));
+  }, [showEth, balance, roseBalance, showPopUp]);
+
   return (
     <BarContainer>
       <ConnectButton $isConnected={isConnected} onClick={handleConnect}>
         {isConnected ? 'Disconnect' : 'Connect'}
       </ConnectButton>
       <Balance>
-        {displayBalance()}
+        <BalanceText onClick={copyBalance}>{displayBalance()}</BalanceText>
         <CurrencyToggle onClick={toggleCurrency}>
           {showEth ? 'ETH' : '🌹'}
         </CurrencyToggle>

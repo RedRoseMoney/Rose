@@ -1,5 +1,4 @@
 import React from 'react';
-import { ethers } from "ethers";
 import Terminal from './components/Terminal';
 import GlobalStyles from './styles/GlobalStyles';
 import { Web3Provider } from './contexts/Web3Context';

@@ -60,7 +60,7 @@ const PopUp = ({ message, onClose }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       closePopUp();
-    }, 10000);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [closePopUp]);
