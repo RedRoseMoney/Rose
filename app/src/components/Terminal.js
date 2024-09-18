@@ -244,8 +244,12 @@ const Terminal = () => {
 
   const buyCall = async (amount) => {
     const numericBalance = parseFloat(nativeBalance);
+    const roundedAmount = Math.round(amount * 1e6) / 1e6;
+    if (roundedAmount < 0.000001) {
+      return <>Amount too small. Minimum amount is 0.000001<EthIcon /></>;
+    }
     if (amount > numericBalance) {
-      return `Insufficient funds. Current balance: ${numericBalance.toFixed(6)} <EthIcon />`;
+      return <>Insufficient funds. Current balance: {numericBalance.toFixed(6)}<EthIcon /></>;
     }
   
     try {
@@ -284,6 +288,10 @@ const Terminal = () => {
   const sellCall = async (amount) => {
     const numericBalance = parseFloat(nativeBalance);
     const numericRoseBalance = parseFloat(roseBalance);
+    const roundedAmount = Math.round(amount * 1e6) / 1e6;
+    if (roundedAmount < 0.000001) {
+      return `Amount too small. Minimum amount is 0.000001🌹`;
+    }
     if (amount > numericRoseBalance) {
       return `Insufficient funds. Current balance: ${numericRoseBalance.toFixed(6)}🌹`;
     }
@@ -296,17 +304,37 @@ const Terminal = () => {
       ['function transfer(address to, uint256 amount) returns (bool)'],
       signer
     );
-    const tx = await roseContract.transfer(rose, ethers.parseUnits(amount.toString(), 18));
-    await tx.wait();
-    
-    const updatedNativeBalance = await provider.getBalance(signer.address);
-    const formattedUpdatedBalance = ethers.formatEther(updatedNativeBalance);
-    
-    return <>Received {(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(6)}<EthIcon /></>;
+    try {
+      const tx = await roseContract.transfer(rose, ethers.parseUnits(amount.toString(), 18));
+      await tx.wait();
+      
+      const updatedNativeBalance = await provider.getBalance(signer.address);
+      const formattedUpdatedBalance = ethers.formatEther(updatedNativeBalance);
+      
+      return <>Received {(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(6)}<EthIcon /></>;
+    } catch (error) {
+      console.error("Error during sell:", error);
+      let errorMessage = "An error occurred during the transaction.";
+      
+      if (error.reason) {
+        errorMessage = error.reason;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Show the error in a popup
+      showPopUp(errorMessage);
+      
+      return `Error during sell. Please try again.`;
+    }
   };
 
   const transferCall = async (amount, recipient) => {
     const numericRoseBalance = parseFloat(roseBalance);
+    const roundedAmount = Math.round(amount * 1e6) / 1e6;
+    if (roundedAmount < 0.000001) {
+      return `Amount too small. Minimum amount is 0.000001🌹`;
+    }
     if (amount > numericRoseBalance) {
       return `Insufficient funds. Current balance: ${numericRoseBalance.toFixed(6)}🌹`;
     }
@@ -340,7 +368,18 @@ const Terminal = () => {
       return `New balance: ${(numericRoseBalance - amount).toFixed(6)}🌹`;
     } catch (error) {
       console.error("Error during transfer:", error);
-      return `Error during transfer: ${error.message}`;
+      let errorMessage = "An error occurred during the transfer.";
+      
+      if (error.reason) {
+        errorMessage = error.reason;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Show the error in a popup
+      showPopUp(errorMessage);
+      
+      return `Error during transfer. Please try again.`;
     }
   };
 
@@ -355,7 +394,7 @@ const Terminal = () => {
        `;
       }
       
-      setAsyncOutput(<>Processing deposit of {amount} <EthIcon />...</>);
+      setAsyncOutput(<>Processing deposit of {amount}<EthIcon />...</>);
 
       animateLogo(async () => {
         const result = await buyCall(amount);
@@ -413,7 +452,7 @@ const Terminal = () => {
       }
       if (nativeBalance) {
         const numericBalance = parseFloat(nativeBalance);
-        return <>Current balance: {numericBalance.toFixed(6)} <EthIcon /></>;
+        return <>Current balance: {numericBalance.toFixed(6)}<EthIcon /></>;
       }
       return 'No wallet connected.';
     },
