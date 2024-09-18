@@ -7,7 +7,7 @@ import TabCompletion from './TabCompletion';
 import BottomBar from './BottomBar';
 import asciiArt from '../assets/ascii-art.txt';
 import Chart from './Chart';
-import { FaCaretUp, FaCircleInfo, FaEthereum } from 'react-icons/fa6';
+import { FaCircleInfo, FaEthereum, FaGithub } from 'react-icons/fa6';
 import Intro from './Intro';
 import SnakeGame from './SnakeGame';
 
@@ -163,6 +163,21 @@ const EthIcon = styled(FaEthereum)`
   margin-right: 2px;
 `;
 
+const GitHubLink = styled.a`
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  color: #ccc;
+  font-size: 24px;
+  cursor: pointer;
+  text-decoration: none;
+  z-index: 10;  // Add this to ensure the link is above other elements
+  
+  &:hover {
+    color: #fff;
+  }
+`;
+
 const Terminal = () => {
   const [input, setInput] = useState('');
   const [history, setHistory] = useState([]);
@@ -293,7 +308,7 @@ const Terminal = () => {
     try {
       const tx = await roseContract.transfer(resolvedAddress, ethers.parseUnits(amount.toString(), 18));
       await tx.wait();
-      return `Transferred ${amount}🌹 to ${recipient}. New balance: ${(numericRoseBalance - amount).toFixed(6)}🌹`;
+      return `New balance: ${(numericRoseBalance - amount).toFixed(6)}🌹`;
     } catch (error) {
       console.error("Error during transfer:", error);
       return `Error during transfer: ${error.message}`;
@@ -531,8 +546,23 @@ const Terminal = () => {
     setShowIntro(false);
   };
 
+  const handleContainerClick = (e) => {
+    // Only focus the input if the click wasn't on the GitHub link
+    if (!e.target.closest('a')) {
+      inputRef.current.focus();
+    }
+  };
+
   return (
-    <TerminalContainer onClick={() => inputRef.current.focus()}>
+    <TerminalContainer onClick={handleContainerClick}>
+      <GitHubLink 
+        href="https://github.com/RedRoseMoney/Rose" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}  // Prevent event from bubbling up
+      >
+        <FaGithub />
+      </GitHubLink>
       {showIntro && (
         <Intro asciiLogo={asciiLogo} onIntroComplete={handleIntroComplete} />
       )}
