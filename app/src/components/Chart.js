@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import asciichart from 'asciichart';
+import { useWeb3 } from '../contexts/Web3Context'; // Add this import
 
 const ChartContainer = styled.div`
   font-family: monospace;
@@ -10,14 +11,18 @@ const ChartContainer = styled.div`
   margin-bottom: 10px;
 `;
 
+const MAX_DATA_POINTS = 100;
+
 function asciiPlot1D(values, width, height) {
     // Use asciichart to plot the values
     return asciichart.plot(values, { height });
 }
 
-const Chart = ({ data }) => {
+const Chart = () => { // Remove the data prop
     const [width, setWidth] = useState(60);  // Default width
     const [height, setHeight] = useState(20);  // Default height
+    const [chartData, setChartData] = useState([]);
+    const { reserve0, reserve1 } = useWeb3(); // Update this line
 
     const resizeChart = () => {
         // Dynamically calculate chart width and height based on window size
@@ -28,6 +33,22 @@ const Chart = ({ data }) => {
         setHeight(newHeight);
     };
 
+    const updateChartData = useCallback(() => {
+        if (reserve0 && reserve1) {
+            const reserve0Value = parseFloat(reserve0);
+            const reserve1Value = parseFloat(reserve1);
+            
+            if (!isNaN(reserve0Value) && !isNaN(reserve1Value) && reserve1Value !== 0) {
+                setChartData(prevData => {
+                    const ratio = reserve0Value / reserve1Value;
+                    const newData = [...prevData, ratio];
+                    // Keep only the last MAX_DATA_POINTS
+                    return newData.slice(-MAX_DATA_POINTS);
+                });
+            }
+        }
+    }, [reserve0, reserve1]);
+
     useEffect(() => {
         // Set initial size
         resizeChart();
@@ -35,12 +56,21 @@ const Chart = ({ data }) => {
         // Listen to window resize events
         window.addEventListener('resize', resizeChart);
 
-        // Clean up the event listener when component unmounts
-        return () => window.removeEventListener('resize', resizeChart);
-    }, []);
+        // Update chart data immediately
+        updateChartData();
+
+        // Set up interval to update chart data every 5 seconds
+        const intervalId = setInterval(updateChartData, 5000);
+
+        // Clean up
+        return () => {
+            window.removeEventListener('resize', resizeChart);
+            clearInterval(intervalId);
+        };
+    }, [updateChartData]);
 
     // Generate the ASCII chart string
-    const chartString = asciiPlot1D(data, width, height);
+    const chartString = chartData.length > 0 ? asciiPlot1D(chartData, width, height) : 'No data available';
 
     return (
         <ChartContainer>

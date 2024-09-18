@@ -16,6 +16,14 @@ const BarContainer = styled.div`
   position: relative;
 `;
 
+const AlphaValue = styled.div`
+  font-size: 12px;
+  color: #00ff00;
+  position: absolute;
+  top: 50%;
+  left: 20px;
+`;
+
 const ConnectButton = styled.span`
   color: ${props => props.$isConnected ? '#4CAF50' : '#2196F3'};
   font-size: 12px;
@@ -66,7 +74,7 @@ const BalanceText = styled.span`
 `;
 
 const BottomBar = () => {
-  const { isConnected, balance, roseBalance, connectWallet, disconnectWallet } = useWeb3();
+  const { isConnected, balance, roseBalance, connectWallet, disconnectWallet, alpha } = useWeb3();
   const { showPopUp } = usePopUp();
   const [showEth, setShowEth] = useState(true);
 
@@ -105,6 +113,7 @@ const BottomBar = () => {
 
   return (
     <BarContainer>
+      <AlphaValue>α: {alpha !== undefined ? parseFloat(alpha).toFixed(4) : 'N/A'}</AlphaValue>
       <ConnectButton $isConnected={isConnected} onClick={handleConnect}>
         {isConnected ? 'Disconnect' : 'Connect'}
       </ConnectButton>
