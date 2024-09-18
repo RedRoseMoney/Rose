@@ -10,6 +10,7 @@ import Chart from './Chart';
 import { FaCircleInfo, FaEthereum, FaGithub } from 'react-icons/fa6';
 import Intro from './Intro';
 import SnakeGame from './SnakeGame';
+import { usePopUp } from '../contexts/PopUpContext';
 
 const TerminalContainer = styled.div`
   background-color: #1e1e1e;
@@ -97,6 +98,19 @@ const CommandSpan = styled.span`
   color: skyblue;
 `;
 
+const HelpContent = styled.div`
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 10px;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 10px;
+  border-radius: 5px;
+  cursor: none;
+  white-space: nowrap;
+`;
+
 const HelpContainer = styled.div`
   position: absolute;
   top: 20px;
@@ -104,15 +118,10 @@ const HelpContainer = styled.div`
   font-size: 0.8em;
   color: #ccc;
   cursor: none;
-`;
 
-const HelpContent = styled.div`
-  display: ${props => props.show ? 'block' : 'none'};
-  margin-top: 10px;
-  background-color: rgba(0, 0, 0, 0.7);
-  padding: 10px;
-  border-radius: 5px;
-  cursor: none;
+  &:hover ${HelpContent} {
+    display: block;
+  }
 `;
 
 const HelpItem = styled.div`
@@ -189,13 +198,13 @@ const Terminal = () => {
   const [asyncOutput, setAsyncOutput] = useState(null);
   const [asciiLogo, setAsciiLogo] = useState('');
   const [isAnimating, setIsAnimating] = useState(false);
-  const [showHelpContent, setShowHelpContent] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
   const [showSnakeGame, setShowSnakeGame] = useState(false);
   const inputRef = useRef(null);
   const terminalContentRef = useRef(null);
 
   const { isConnected, signer, provider, balance: nativeBalance , roseBalance, rose, reserve0, reserve1, alpha} = useWeb3();
+  const { showPopUp } = usePopUp();
 
   const availableCommands = ['buy', 'sell', 'transfer', 'balance', 'address', 'snake', 'clear', 'exit'];
 
@@ -248,7 +257,18 @@ const Terminal = () => {
       return <>Received {(parseFloat(formattedUpdatedRoseBalance) - parseFloat(roseBalance)).toFixed(6)}🌹</>;
     } catch (error) {
       console.error("Error during buy:", error);
-      return `Error during buy: ${error.message}`;
+      let errorMessage = "An error occurred during the transaction.";
+      
+      if (error.reason) {
+        errorMessage = error.reason;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Show the error in a popup
+      showPopUp(errorMessage);
+      
+      return `Error during buy. Please try again.`;
     }
   };
 
@@ -574,9 +594,9 @@ const Terminal = () => {
           </GlitterContainer>
         )}
       </AsciiArtWrapper>
-      <HelpContainer onClick={() => setShowHelpContent(!showHelpContent)}>
-        {!showHelpContent && <FaCircleInfo />}
-        <HelpContent show={showHelpContent}>
+      <HelpContainer>
+        <FaCircleInfo />
+        <HelpContent>
           <HelpItem><HelpIcon>⇥</HelpIcon> to see options</HelpItem>
           <HelpItem><HelpIcon>↑</HelpIcon> to see historic commands</HelpItem>
           <HelpItem><HelpIcon>↵</HelpIcon> to run a command</HelpItem>
