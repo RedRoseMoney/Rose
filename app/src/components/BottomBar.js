@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useWeb3 } from '../contexts/Web3Context';
 import { usePopUp } from '../contexts/PopUpContext';
 import { useState, useCallback } from 'react';
+import { FaEthereum } from 'react-icons/fa6';
 
 const BarContainer = styled.div`
   display: flex;
@@ -110,7 +111,7 @@ const BottomBar = () => {
       <Balance>
         <BalanceText onClick={copyBalance}>{displayBalance()}</BalanceText>
         <CurrencyToggle onClick={toggleCurrency}>
-          {showEth ? 'ETH' : '🌹'}
+          {showEth ? <FaEthereum /> : '🌹'}
         </CurrencyToggle>
       </Balance>
     </BarContainer>

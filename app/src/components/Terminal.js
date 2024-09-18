@@ -7,7 +7,7 @@ import TabCompletion from './TabCompletion';
 import BottomBar from './BottomBar';
 import asciiArt from '../assets/ascii-art.txt';
 import Chart from './Chart';
-import { FaCaretUp, FaCaretRight, FaCircleInfo, FaEthereum } from 'react-icons/fa6';
+import { FaCaretUp, FaCircleInfo, FaEthereum } from 'react-icons/fa6';
 import Intro from './Intro';
 import SnakeGame from './SnakeGame';
 
@@ -47,7 +47,6 @@ const TerminalContent = styled.div`
   word-wrap: break-word;
   overflow-wrap: break-word;
   scrollbar-width: none;  /* Firefox */
-  -ms-overflow-style: none;  /* Internet Explorer 10+ */
   
   &::-webkit-scrollbar {
     width: 0;
@@ -58,7 +57,6 @@ const TerminalContent = styled.div`
   user-select: text;
   -webkit-user-select: text;
   -moz-user-select: text;
-  -ms-user-select: text;
 `;
 
 const InputContainer = styled.div`
@@ -105,7 +103,7 @@ const HelpContainer = styled.div`
   right: 20px;
   font-size: 0.8em;
   color: #ccc;
-  cursor: pointer;
+  cursor: none;
 `;
 
 const HelpContent = styled.div`
@@ -114,12 +112,14 @@ const HelpContent = styled.div`
   background-color: rgba(0, 0, 0, 0.7);
   padding: 10px;
   border-radius: 5px;
+  cursor: none;
 `;
 
 const HelpItem = styled.div`
   display: flex;
   align-items: center;
   margin-bottom: 5px;
+  cursor: none;
 `;
 
 const HelpIcon = styled.span`
@@ -548,11 +548,8 @@ const Terminal = () => {
         {!showHelpContent && <FaCircleInfo />}
         <HelpContent show={showHelpContent}>
           <HelpItem><HelpIcon>⇥</HelpIcon> to see options</HelpItem>
-          <HelpItem><HelpIcon><FaCaretUp /></HelpIcon> to see historic commands</HelpItem>
+          <HelpItem><HelpIcon>↑</HelpIcon> to see historic commands</HelpItem>
           <HelpItem><HelpIcon>↵</HelpIcon> to run a command</HelpItem>
-          <HelpItem><HelpIcon>💡</HelpIcon> Click ticker to switch balance</HelpItem>
-          <HelpItem><HelpIcon>💡</HelpIcon> Click on the balance to copy</HelpItem>
-          <HelpItem><HelpIcon>💡</HelpIcon> Select text to copy</HelpItem>
         </HelpContent>
       </HelpContainer>
       <TerminalContent 
