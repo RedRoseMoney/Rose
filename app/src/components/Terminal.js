@@ -39,6 +39,15 @@ const AsciiArtContainer = styled.pre`
   animation: ${props => props.isAnimating ? beeMotion : 'none'} 0.5s infinite;
 `;
 
+const ClickableAsciiArtContainer = styled(AsciiArtContainer)`
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+
+  &:hover {
+    opacity: 0.8;
+  }
+`;
+
 const TerminalContent = styled.div`
   flex-grow: 1;
   overflow-y: auto;
@@ -279,8 +288,8 @@ const Terminal = () => {
       return `Insufficient funds. Current balance: ${numericRoseBalance.toFixed(6)}🌹`;
     }
     const numericReserve1 = parseFloat(reserve1);
-    if (amount > numericReserve1) {
-      return `Amount too large, can only sell up to 2% of the pool. Current reserve: ${numericReserve1.toFixed(6)}🌹`;
+    if (amount > (numericReserve1 / 50)) {
+      return `Amount too large, can only sell up to 2% of the pool. Max sell: ${(numericReserve1/50).toFixed(6)}🌹`;
     }
     const roseContract = new ethers.Contract(
       rose,
@@ -573,6 +582,22 @@ const Terminal = () => {
     }
   };
 
+  const handleLogoClick = () => {
+    if (rose) {
+      navigator.clipboard.writeText(rose).then(
+        () => {
+          showPopUp('Rose address copied to clipboard!');
+        },
+        (err) => {
+          console.error('Failed to copy Rose address: ', err);
+          showPopUp('Failed to copy Rose address');
+        }
+      );
+    } else {
+      showPopUp('Rose address not available');
+    }
+  };
+
   return (
     <TerminalContainer onClick={handleContainerClick}>
       <GitHubLink 
@@ -587,7 +612,12 @@ const Terminal = () => {
         <Intro asciiLogo={asciiLogo} onIntroComplete={handleIntroComplete} />
       )}
       <AsciiArtWrapper>
-        <AsciiArtContainer isAnimating={isAnimating}>{asciiLogo}</AsciiArtContainer>
+        <ClickableAsciiArtContainer 
+          isAnimating={isAnimating}
+          onClick={handleLogoClick}
+        >
+          {asciiLogo}
+        </ClickableAsciiArtContainer>
         {isAnimating && (
           <GlitterContainer>
             {renderGlitters()}
