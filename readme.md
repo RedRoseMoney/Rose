@@ -67,7 +67,7 @@ Rose is part of the new generation of cypherpunk finance, improving on the core 
 - **Fair distribution**: fairly distributed on day one, without premine, snipers or external funding.
 - **Community owned**: Rose DAO is fully decentralized with no legally-binding entity, leveraging the [RWGM](#rose-dao) algorithm to democratically allocate funds.
 - **Privacy preserving**: Rose supports on-chain privacy through the [Black Box](contracts/src/BlackBox.sol) privacy device, leveraging [pedersen commitments](https://en.wikipedia.org/wiki/Pedersen_commitment), [merkle-trees](https://en.wikipedia.org/wiki/Merkle_tree) and [Zero Knowledge Proofs](https://en.wikipedia.org/wiki/Zero-knowledge_proof) to ensure unlinkability of transactions, with no extractable MEV.
-- **Uncompromised security**: Rose settles on the mother chain, where communities can access true decentralization and privacy. We don't fuck with the feds.
+- **Uncompromised security**: Rose settles on mainnet, where communities can access true decentralization and privacy. We don't fuck with the feds.
 
 ### the Asymmetric AMM
 
