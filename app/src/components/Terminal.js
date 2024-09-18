@@ -7,7 +7,9 @@ import TabCompletion from './TabCompletion';
 import BottomBar from './BottomBar';
 import asciiArt from '../assets/ascii-art.txt';
 import Chart from './Chart';
-import { FaCaretUp, FaCaretRight } from 'react-icons/fa6';
+import { FaCaretUp, FaCaretRight, FaCircleInfo, FaEthereum } from 'react-icons/fa6';
+import Intro from './Intro';
+import SnakeGame from './SnakeGame';
 
 const TerminalContainer = styled.div`
   background-color: #1e1e1e;
@@ -101,11 +103,17 @@ const HelpContainer = styled.div`
   position: absolute;
   top: 20px;
   right: 20px;
+  font-size: 0.8em;
+  color: #ccc;
+  cursor: pointer;
+`;
+
+const HelpContent = styled.div`
+  display: ${props => props.show ? 'block' : 'none'};
+  margin-top: 10px;
   background-color: rgba(0, 0, 0, 0.7);
   padding: 10px;
   border-radius: 5px;
-  font-size: 0.8em;
-  color: #ccc;
 `;
 
 const HelpItem = styled.div`
@@ -118,6 +126,43 @@ const HelpIcon = styled.span`
   margin-right: 5px;
 `;
 
+const glitterAnimation = keyframes`
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+`;
+
+const GlitterContainer = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+`;
+
+const Glitter = styled.div`
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background-color: #fff;
+  border-radius: 50%;
+  opacity: 0;
+  animation: ${glitterAnimation} 0.5s infinite;
+  animation-delay: ${props => props.delay}s;
+  top: ${props => props.top}%;
+  left: ${props => props.left}%;
+`;
+
+const AsciiArtWrapper = styled.div`
+  position: relative;
+  display: inline-block;
+`;
+
+const EthIcon = styled(FaEthereum)`
+  vertical-align: middle;
+  margin-right: 2px;
+`;
+
 const Terminal = () => {
   const [input, setInput] = useState('');
   const [history, setHistory] = useState([]);
@@ -125,16 +170,19 @@ const Terminal = () => {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [showTabCompletion, setShowTabCompletion] = useState(false);
   const [showTabHint, setShowTabHint] = useState(true);
-  const [chartData, setChartData] = useState([10, 20, 15, 25, 30, 22, 18, 32, 45, 41, 50, 56, 62, 48, 45, 51, 43, 41, 38, 50, 48,47, 53, 56, 57, 75, 86, 95, 70, 56, 76]);
+  const [chartData, setChartData] = useState([1, 0.8, 1.5, 1.9, 1.8, 2.5, 1.1, 1.5, 1.7, 2.2, 3.3, 3.5, 4.5, 4.8, 4.2, 5.3, 4.1, 4.7, 5.8, 6.3, 6.1, 4.2, 5.1, 6.1, 6.7, 7.8, 8.7, 10, 20, 15, 25, 30, 22, 18, 32, 45, 41, 50, 56, 62, 48, 45, 51, 43, 41, 38, 50, 48,47, 53, 56, 57, 75, 86, 95, 70, 56, 76]);
   const [asyncOutput, setAsyncOutput] = useState(null);
   const [asciiLogo, setAsciiLogo] = useState('');
   const [isAnimating, setIsAnimating] = useState(false);
+  const [showHelpContent, setShowHelpContent] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
+  const [showSnakeGame, setShowSnakeGame] = useState(false);
   const inputRef = useRef(null);
   const terminalContentRef = useRef(null);
 
   const { isConnected, signer, provider, balance: nativeBalance , roseBalance, rose, reserve0, reserve1, alpha} = useWeb3();
 
-  const availableCommands = ['deposit', 'withdraw', 'transfer', 'balance', 'address', 'clear', 'exit'];
+  const availableCommands = ['buy', 'sell', 'transfer', 'balance', 'address', 'snake', 'clear', 'exit'];
 
   useEffect(() => {
     fetch(asciiArt)
@@ -161,10 +209,10 @@ const Terminal = () => {
     }
   };
 
-  const depositCall = async (amount) => {
+  const buyCall = async (amount) => {
     const numericBalance = parseFloat(nativeBalance);
     if (amount > numericBalance) {
-      return `Insufficient funds. Current balance: ${numericBalance.toFixed(4)} ETH`;
+      return `Insufficient funds. Current balance: ${numericBalance.toFixed(6)} <EthIcon />`;
     }
   
     try {
@@ -173,22 +221,31 @@ const Terminal = () => {
         value: ethers.parseEther(amount.toString())
       });
       await tx.wait();
-      return `Deposited ${amount} ETH. New balance: ${(numericBalance - amount).toFixed(4)} ETH`;
+      const roseContract = new ethers.Contract(
+        rose,
+        ['function balanceOf(address account) view returns (uint256)'],
+        provider
+      );
+      const updatedRoseBalance = await roseContract.balanceOf(signer.address);
+      const updatedNativeBalance = await provider.getBalance(signer.address);
+      const formattedUpdatedRoseBalance = ethers.formatEther(updatedRoseBalance);
+      const formattedUpdatedNativeBalance = ethers.formatEther(updatedNativeBalance);
+      return <>Received {(parseFloat(formattedUpdatedRoseBalance) - parseFloat(roseBalance)).toFixed(6)}🌹</>;
     } catch (error) {
-      console.error("Error during deposit:", error);
-      return `Error during deposit: ${error.message}`;
+      console.error("Error during buy:", error);
+      return `Error during buy: ${error.message}`;
     }
   };
 
-  const withdrawCall = async (amount) => {
+  const sellCall = async (amount) => {
     const numericBalance = parseFloat(nativeBalance);
     const numericRoseBalance = parseFloat(roseBalance);
     if (amount > numericRoseBalance) {
-      return `Insufficient funds. Current balance: ${numericRoseBalance.toFixed(4)}🌹`;
+      return `Insufficient funds. Current balance: ${numericRoseBalance.toFixed(6)}🌹`;
     }
     const numericReserve1 = parseFloat(reserve1);
     if (amount > numericReserve1) {
-      return `Amount too large, can only sell up to 2% of the pool. Current reserve: ${numericReserve1.toFixed(4)}🌹`;
+      return `Amount too large, can only sell up to 2% of the pool. Current reserve: ${numericReserve1.toFixed(6)}🌹`;
     }
     const roseContract = new ethers.Contract(
       rose,
@@ -198,18 +255,16 @@ const Terminal = () => {
     const tx = await roseContract.transfer(rose, ethers.parseUnits(amount.toString(), 18));
     await tx.wait();
     
-    // Fetch the updated native balance
     const updatedNativeBalance = await provider.getBalance(signer.address);
     const formattedUpdatedBalance = ethers.formatEther(updatedNativeBalance);
     
-    return `Withdrawn ${amount}🌹. New balance: ${(numericRoseBalance - amount).toFixed(4)}🌹
-Received ${(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(4)} ETH`;
+    return <>Received {(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(6)}<EthIcon /></>;
   };
 
   const transferCall = async (amount, recipient) => {
     const numericRoseBalance = parseFloat(roseBalance);
     if (amount > numericRoseBalance) {
-      return `Insufficient funds. Current balance: ${numericRoseBalance.toFixed(4)}🌹`;
+      return `Insufficient funds. Current balance: ${numericRoseBalance.toFixed(6)}🌹`;
     }
 
     let resolvedAddress;
@@ -238,7 +293,7 @@ Received ${(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(4)} ET
     try {
       const tx = await roseContract.transfer(resolvedAddress, ethers.parseUnits(amount.toString(), 18));
       await tx.wait();
-      return `Transferred ${amount}🌹 to ${recipient}. New balance: ${(numericRoseBalance - amount).toFixed(4)}🌹`;
+      return `Transferred ${amount}🌹 to ${recipient}. New balance: ${(numericRoseBalance - amount).toFixed(6)}🌹`;
     } catch (error) {
       console.error("Error during transfer:", error);
       return `Error during transfer: ${error.message}`;
@@ -246,45 +301,43 @@ Received ${(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(4)} ET
   };
 
   const commands = {
-    deposit: (args) => {
+    buy: (args) => {
       const amount = parseFloat(args[0]);
       if (isNaN(amount) || amount <= 0) {
         return `<pre>Invalid amount. Please enter a positive number.
             
-    usage: deposit &lt;amount&gt;
+    usage: buy &lt;amount&gt;
         </pre>
        `;
       }
       
-      // Set initial processing message
-      setAsyncOutput(`Processing deposit of ${amount} ETH...`);
+      setAsyncOutput(<>Processing deposit of {amount} <EthIcon />...</>);
 
       animateLogo(async () => {
-        const result = await depositCall(amount);
+        const result = await buyCall(amount);
         setAsyncOutput(result);
       });
 
-      return null; // Return null to prevent immediate output
+      return null;
     },
-    withdraw: (args) => {
+    sell: (args) => {
       const amount = parseFloat(args[0]);
       if (isNaN(amount) || amount <= 0) {
         return `<pre>Invalid amount. Please enter a positive number.
 
-    usage: withdraw &lt;amount&gt;
+    usage: sell &lt;amount&gt;
         </pre>
        `;
       }
       
-      // Set initial processing message
-      setAsyncOutput(`Processing withdrawal of ${amount}🌹...`);
+      setAsyncOutput(`Processing sale of ${amount}🌹...`);
 
       animateLogo(async () => {
-        const result = await withdrawCall(amount);
+        const result = await sellCall(amount);
         setAsyncOutput(result);
       });
 
-      return null; // Return null to prevent immediate output
+      return null;
     },
     transfer: (args) => {
       const amount = parseFloat(args[0]);
@@ -297,7 +350,6 @@ Received ${(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(4)} ET
        `;
       }
       
-      // Set initial processing message
       setAsyncOutput(`Processing transfer of ${amount}🌹 to ${recipient}...`);
 
       animateLogo(async () => {
@@ -305,7 +357,7 @@ Received ${(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(4)} ET
         setAsyncOutput(result);
       });
 
-      return null; // Return null to prevent immediate output
+      return null;
     },
     balance: (args) => {
       if (args.length > 0) {
@@ -317,7 +369,7 @@ Received ${(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(4)} ET
       }
       if (nativeBalance) {
         const numericBalance = parseFloat(nativeBalance);
-        return `Current balance: ${numericBalance.toFixed(4)} ETH`;
+        return <>Current balance: {numericBalance.toFixed(6)} <EthIcon /></>;
       }
       return 'No wallet connected.';
     },
@@ -356,6 +408,17 @@ Received ${(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(4)} ET
       }
       window.close();
       return 'Closing terminal...';
+    },
+    snake: (args) => {
+      if (args.length > 0) {
+        return `<pre>snake does not take additional arguments.
+
+    usage: snake
+        </pre>
+       `;
+      }
+      setShowSnakeGame(true);
+      return 'Starting Snake game...';
     },
   };
 
@@ -397,13 +460,7 @@ Received ${(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(4)} ET
       setShowTabCompletion(false);
     } else if (e.key === 'Tab') {
       e.preventDefault();
-      // if (showTabCompletion) {
-      //   // Cycle through tab completion options
-      //   setTabCompletionIndex((prevIndex) => (prevIndex + 1) % availableCommands.length);
-      // } else {
       setShowTabCompletion(true);
-      // setTabCompletionIndex(0);
-      // }
     } else if (e.key === 'Escape') {
       e.preventDefault();
       setShowTabCompletion(false);
@@ -447,7 +504,6 @@ Received ${(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(4)} ET
       navigator.clipboard.writeText(selectedText).then(
         () => {
           console.log('Text copied to clipboard');
-          // Optionally, you can show a brief notification to the user
         },
         (err) => {
           console.error('Failed to copy text: ', err);
@@ -456,16 +512,48 @@ Received ${(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(4)} ET
     }
   };
 
+  const renderGlitters = () => {
+    const glitters = [];
+    for (let i = 0; i < 20; i++) {
+      glitters.push(
+        <Glitter
+          key={i}
+          delay={Math.random()}
+          top={Math.random() * 100}
+          left={Math.random() * 100}
+        />
+      );
+    }
+    return glitters;
+  };
+
+  const handleIntroComplete = () => {
+    setShowIntro(false);
+  };
+
   return (
     <TerminalContainer onClick={() => inputRef.current.focus()}>
-      <AsciiArtContainer isAnimating={isAnimating}>{asciiLogo}</AsciiArtContainer>
-      <HelpContainer>
-        <HelpItem><HelpIcon>⇥</HelpIcon> for options</HelpItem>
-        <HelpItem><HelpIcon><FaCaretUp /></HelpIcon> for historic commands</HelpItem>
-        <HelpItem><HelpIcon>↵</HelpIcon> to run a command</HelpItem>
-        <HelpItem>Click ticker to switch balance</HelpItem>
-        <HelpItem>Click on the balance to copy</HelpItem>
-        <HelpItem>Select text to copy</HelpItem>
+      {showIntro && (
+        <Intro asciiLogo={asciiLogo} onIntroComplete={handleIntroComplete} />
+      )}
+      <AsciiArtWrapper>
+        <AsciiArtContainer isAnimating={isAnimating}>{asciiLogo}</AsciiArtContainer>
+        {isAnimating && (
+          <GlitterContainer>
+            {renderGlitters()}
+          </GlitterContainer>
+        )}
+      </AsciiArtWrapper>
+      <HelpContainer onClick={() => setShowHelpContent(!showHelpContent)}>
+        {!showHelpContent && <FaCircleInfo />}
+        <HelpContent show={showHelpContent}>
+          <HelpItem><HelpIcon>⇥</HelpIcon> to see options</HelpItem>
+          <HelpItem><HelpIcon><FaCaretUp /></HelpIcon> to see historic commands</HelpItem>
+          <HelpItem><HelpIcon>↵</HelpIcon> to run a command</HelpItem>
+          <HelpItem><HelpIcon>💡</HelpIcon> Click ticker to switch balance</HelpItem>
+          <HelpItem><HelpIcon>💡</HelpIcon> Click on the balance to copy</HelpItem>
+          <HelpItem><HelpIcon>💡</HelpIcon> Select text to copy</HelpItem>
+        </HelpContent>
       </HelpContainer>
       <TerminalContent 
         ref={terminalContentRef}
@@ -480,7 +568,11 @@ Received ${(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(4)} ET
                 <CommandSpan>{item.content}</CommandSpan>
               </>
             ) : (
-              <OutputDiv dangerouslySetInnerHTML={{ __html: item.content }} />
+              <OutputDiv>
+                {typeof item.content === 'string' 
+                  ? item.content.replace(/ETH/g, '<EthIcon />')
+                  : item.content}
+              </OutputDiv>
             )}
           </div>
         ))}
@@ -492,6 +584,7 @@ Received ${(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(4)} ET
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
+            disabled={showSnakeGame}
           />
           {showTabHint && <TabHint>press tab to see options</TabHint>}
         </InputContainer>
@@ -501,6 +594,7 @@ Received ${(parseFloat(formattedUpdatedBalance) - numericBalance).toFixed(4)} ET
       </TerminalContent>
       <Chart data={chartData} />
       <BottomBar />
+      {showSnakeGame && <SnakeGame onClose={() => setShowSnakeGame(false)} />}
     </TerminalContainer>
   );
 };
