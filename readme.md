@@ -3,14 +3,15 @@
 # [ **Rose** ]
 
 [![Twitter](https://img.shields.io/twitter/follow/ROSE?style=social)](https://twitter.com/redrosemoney)
-![GitHub issues](https://img.shields.io/github/issues/RedRoseMoney/rose)
-<!-- [![Website](https://img.shields.io/website?url=https%3A%2F%2Fredrose.com%2F)](https://redrose.com/) -->
+![GitHub issues](https://img.shields.io/github/issues/RedRoseMoney/Rose)
+[![Website](https://img.shields.io/website?url=https%3A%2F%2Frose-terminal.vercel.app)](https://rose-terminal.vercel.app)
 
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
 
 ![rose](assets/rose.svg)
 
-<!-- [Discord](https://discord.gg/redrose) • [twitter](https://twitter.com/redrose) • [Website](https://redrose.com/) -->
+<!-- [Discord](https://discord.gg/redrose) •  -->
+[twitter](https://twitter.com/redrosemoney) • [Website](https://rose-terminal.vercel.app)
 
 </div>
 
@@ -66,15 +67,15 @@ Rose is part of the new generation of cypherpunk finance, improving on the core 
 - **Price performance**: Rose cleverly exploits the AMM model to bind price performance to volume.
 - **Fair distribution**: fairly distributed on day one, without premine, snipers or external funding.
 - **Community owned**: Rose DAO is fully decentralized with no legally-binding entity, leveraging the [RWGM](#rose-dao) algorithm to democratically allocate funds.
-- **Privacy preserving**: Rose supports on-chain privacy through the [Black Box](contracts/src/BlackBox.sol) privacy device, leveraging [pedersen commitments](https://en.wikipedia.org/wiki/Pedersen_commitment), [merkle-trees](https://en.wikipedia.org/wiki/Merkle_tree) and [Zero Knowledge Proofs](https://en.wikipedia.org/wiki/Zero-knowledge_proof) to ensure unlinkability of transactions, with no extractable MEV.
+- **Privacy preserving**: Rose supports on-chain privacy through the [Black Box](https://github.com/RedRoseMoney/rose-blackbox/blob/main/src/BlackBox.sol) privacy device, leveraging [pedersen commitments](https://en.wikipedia.org/wiki/Pedersen_commitment), [merkle-trees](https://en.wikipedia.org/wiki/Merkle_tree) and [Zero Knowledge Proofs](https://en.wikipedia.org/wiki/Zero-knowledge_proof) to ensure unlinkability of transactions, with no extractable MEV.
 - **Uncompromised security**: Rose settles on mainnet, where communities can access true decentralization and privacy. We don't fuck with the feds.
 
 ### the Asymmetric AMM
 
-**Rose** implements an asymmetric bonding curve that optimizes for *price upside volatility* and *deep liquidity* on exits, **mimicking an [Asymmetric AMM](models/ContinuousModel.jl)**.
+**Rose** implements an asymmetric bonding curve that optimizes for *price upside volatility* and *deep liquidity* on exits, **mimicking an [Asymmetric AMM](https://github.com/RedRoseMoney/rose-research/blob/main/src/ContinuousModel.jl)**.
 
 An Asymmetric AMM ($aAMM$) is a Bonding Curve with two distinct formulas for buy and sell orders.  
-[Rose aAMM market implementation](contracts/src/Rose.sol) decreases liquidity on buy orders to increase upside volatility, while providing deep liquidity for sellers. As a result, for an equivalent long/short volume, the price will increase *proportionally to the volume itself*.  
+[Rose aAMM market implementation](https://github.com/RedRoseMoney/rose-core/blob/main/contracts/src/Rose.sol) decreases liquidity on buy orders to increase upside volatility, while providing deep liquidity for sellers. As a result, for an equivalent long/short volume, the price will increase *proportionally to the volume itself*.  
 **This is unlike traditional AMM bonding curves where a long/short ratio of 1 implies no price changes***  
 *ignoring plateform fees
 
@@ -116,8 +117,6 @@ By the constant-product formula, there is a proportional relation between the re
 *Reserve R₀ amount, uniform volume of 1b with varying α, log scale.
 starting from reserves (1e6, 1e6).  
 reading: for 1b total volume (500m buys and 500m sells), R₀ decreases by ~90% with α = 0.01.*
-
-<!-- The soundness of the system stems from the fact that one can view the rose $aAMM$ as a Just-In-Time liquidity strategy on an AMM pool, JIT withdrawing part of the liquidity on buy orders, then providing back at the updated reserve ratio. -->
 
 #### Burns and buybacks
 
