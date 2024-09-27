@@ -74,7 +74,7 @@ Rose is part of the new generation of cypherpunk finance, improving on the core 
 **Rose** implements an asymmetric bonding curve that optimizes for *price upside volatility* and *deep liquidity* on exits, **mimicking an [Asymmetric AMM](https://github.com/RedRoseMoney/rose-research/blob/main/src/ContinuousModel.jl)**.
 
 An Asymmetric AMM ($aAMM$) is a Bonding Curve with two distinct formulas for buy and sell orders.  
-[Rose aAMM market implementation](https://github.com/RedRoseMoney/rose-core/blob/main/contracts/src/Rose.sol) decreases liquidity on buy orders to increase upside volatility, while providing deep liquidity for sellers. As a result, for an equivalent long/short volume, the price will increase *proportionally to the volume itself*.  
+[Rose aAMM market implementation](https://github.com/RedRoseMoney/rose-core/blob/main/src/Rose.sol) decreases liquidity on buy orders to increase upside volatility, while providing deep liquidity for sellers. As a result, for an equivalent long/short volume, the price will increase *proportionally to the volume itself*.  
 **This is unlike traditional AMM bonding curves where a long/short ratio of 1 implies no price changes***  
 *ignoring plateform fees
 
@@ -129,7 +129,9 @@ In practice, a burn doesn't directly affect market liquidity and often does not 
 
 the aAMM ensures mechanical price appreciation from volume by permanently removing liquidity from the market, weighted by the skew parameter $\alpha$.
 
-A penalty on sells is added to increase the LP portfolio in the denominating asset, and is used to proceed to strategic buybacks to further support `Rose` price.
+A 1% penalty on sells is added to load the treasury in the denominating asset, and is used to proceed to strategic buybacks to further support `Rose` price.
+
+Punk Money is a collective of post-scarcity builders, artists and degens. Every product from the Punk Money collective will have a 1% tax on utilisation, from which 50% will collected for automated buybacks and burn.
 
 #### Under the AMM model
 
