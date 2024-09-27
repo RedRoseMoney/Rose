@@ -239,6 +239,8 @@ with $Γ^+ : (R_0, R_1, x) -> (R_0′, R_1′, y)$ defined as:
 
 - $y = R_1 - \frac{α^2K}{αR_0 + x}$
 
+where $\frac{αR_1}{αR_0}$ is the new reserve ratio after the buy order,
+
 and $Γ^- : (R_0, R_1, x) -> (R_0′, R_1′, y)$ defined as:
 
 - $R_0′ = R_0 - x$
