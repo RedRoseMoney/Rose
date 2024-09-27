@@ -66,7 +66,7 @@ Rose is part of the new generation of cypherpunk finance, improving on the core 
 
 - **Price performance**: Rose cleverly exploits the AMM model to bind price performance to volume.
 - **Fair distribution**: fairly distributed on day one, without premine, snipers or external funding.
-- **Community owned**: Rose DAO is fully decentralized with no legally-binding entity, leveraging the [RWGM](#rose-dao) algorithm to democratically allocate funds.
+- **Community owned**: Rose DAO is fully decentralized, leveraging the [RWGM](#rose-dao) algorithm to democratically allocate funds.
 - **Uncompromised security**: Rose settles on mainnet, where communities can access true decentralization and privacy. We don't fuck with the feds.
 
 ### the Asymmetric AMM
