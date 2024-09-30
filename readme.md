@@ -109,14 +109,6 @@ Volume is uniform across both buy and sell orders.*
 
 By the constant-product formula, there is a proportional relation between the reserves liquidity and volatility for a fixed amount bought. Rose controls volatility by reducing market depth on buy orders, while preserving deep liquidity on sell orders.
 
-<div style="display: flex; flex-direction: row; justify-content: space-between; gap: 10px;">
-  <img src="assets/r0reservelog.png" alt="asymmetric bonding curve random walk" style="width: 96%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.3s;">
-</div>
-
-*Reserve R₁ amount, uniform volume of 1b with varying α, log scale.
-starting from reserves (1e6, 1e6).  
-reading: for 1b total volume (500m buys and 500m sells), R₀ decreases by ~90% with α = 0.01.*
-
 #### Burns and buybacks
 
 Since a buy order is not executed on full liquidity, the reserves ratio increases faster than a classical AMM pool, thus leaving an excess of `rose` when reinjecting liquidity.  
