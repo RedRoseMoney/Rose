@@ -2,16 +2,16 @@
 
 # [ **Rose** ]
 
-[![Twitter](https://img.shields.io/twitter/follow/ROSE?style=social)](https://twitter.com/redrosemoney)
+[![Twitter](https://img.shields.io/twitter/follow/ROSE?style=social)](https://twitter.com/punkmoneyrose)
 ![GitHub issues](https://img.shields.io/github/issues/RedRoseMoney/Rose)
-[![Website](https://img.shields.io/website?url=https%3A%2F%2Frose-terminal.vercel.app)](https://rose-terminal.vercel.app)
+[![Website](https://img.shields.io/website?url=rose-terminal.com)](rose-terminal.com)
 
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
 
 ![rose](assets/rose.svg)
 
 <!-- [Discord](https://discord.gg/redrose) •  -->
-[twitter](https://twitter.com/redrosemoney) • [Website](https://rose-terminal.vercel.app)
+[twitter](https://twitter.com/punkmoneyrose) • [Website](rose-terminal.com)
 
 </div>
 
@@ -68,6 +68,8 @@ Rose is part of the new generation of cypherpunk finance, improving on the core 
 - **Fair distribution**: fairly distributed on day one, without premine, snipers or external funding.
 - **Community owned**: Rose DAO is fully decentralized, leveraging the [RWGM](#rose-dao) algorithm to democratically allocate funds.
 - **Uncompromised security**: Rose settles on mainnet, where communities can access true decentralization and privacy. We don't fuck with the feds.
+
+---
 
 ### the Asymmetric AMM
 
