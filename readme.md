@@ -4,14 +4,14 @@
 
 [![Twitter](https://img.shields.io/twitter/follow/ROSE?style=social)](https://twitter.com/punkmoneyrose)
 ![GitHub issues](https://img.shields.io/github/issues/RedRoseMoney/Rose)
-[![Website](https://img.shields.io/website?url=rose-terminal.com)](rose-terminal.com)
+[![Website](https://img.shields.io/website?url=https://www.rose-terminal.com/)](https://www.rose-terminal.com/)
 
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
 
 ![rose](assets/rose.svg)
 
 <!-- [Discord](https://discord.gg/redrose) •  -->
-[twitter](https://twitter.com/punkmoneyrose) • [Website](rose-terminal.com)
+[twitter](https://twitter.com/punkmoneyrose) • [Website](https://www.rose-terminal.com/)
 
 </div>
 
@@ -25,7 +25,6 @@
   - [CPMM bonding curve](#cpmm-bonding-curve)
   - [ROSE Asymmetric Bonding Curve](#rose-asymmetric-bonding-curve)
   - [Asymmetric AMM : Continuous model](#asymmetric-amm--continuous-model)
-  - [aAMM Differential Equations](#aamm-differential-equations)
 <!-- - [Usage](#usage)
   - [App](#app)
   - [Contracts](#contracts) -->
